@@ -1,0 +1,77 @@
+{
+  "ActionList": {
+    "FetchLoggerGroupA": {
+      "Arguments": {
+        "serial_numbers": "z6-19600,z6-12196,z6-19602,z6-19604,z6-19597,z6-19594,z6-19599",
+        "start_date": "2026-04-29 00:00:00",
+        "end_date": "2026-04-30 00:00:00",
+        "raw_prefix": "zentra_raw_phase2_test",
+        "batch_name": "group_a",
+        "per_page": 2000,
+        "sleep_seconds": 65,
+        "server": "https://zentracloud.com",
+        "api_version": "v4"
+      },
+      "InvokeNext": [
+        "FetchLoggerGroupB"
+      ],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "fetch_multiple_logger_raw"
+    },
+    "FetchLoggerGroupB": {
+      "Arguments": {
+        "serial_numbers": "z6-12197,z6-19595,z6-19598,z6-12202,z6-19596,z6-19603",
+        "start_date": "2026-04-29 00:00:00",
+        "end_date": "2026-04-30 00:00:00",
+        "raw_prefix": "zentra_raw_phase2_test",
+        "batch_name": "group_b",
+        "per_page": 2000,
+        "sleep_seconds": 65,
+        "server": "https://zentracloud.com",
+        "api_version": "v4"
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "fetch_multiple_logger_raw"
+    }
+  },
+  "ComputeServers": {
+    "GH": {
+      "FaaSType": "GitHubActions",
+      "UseSecretStore": true,
+      "ActionRepoName": "FaaSr-workflow",
+      "Branch": "main",
+      "UserName": "Mallika-Guptaa"
+    }
+  },
+  "DataStores": {
+    "S3": {
+      "Endpoint": "https://s3.us-east-005.backblazeb2.com",
+      "Bucket": "1check",
+      "Region": "us-east-005"
+    }
+  },
+  "ActionContainers": {
+    "FetchLoggerGroupA": "ghcr.io/faasr/github-actions-python:latest",
+    "FetchLoggerGroupB": "ghcr.io/faasr/github-actions-python:latest"
+  },
+  "FunctionInvoke": "FetchLoggerGroupA",
+  "DefaultDataStore": "S3",
+  "FunctionGitRepo": {
+    "fetch_multiple_logger_raw": "Mallika-Guptaa/zentra_backfill_workflow_files/python"
+  },
+  "PyPIPackageDownloads": {
+    "fetch_multiple_logger_raw": [
+      "pandas",
+      "requests"
+    ]
+  },
+  "Secrets": [
+    "ZENTRA_TOKEN"
+  ],
+  "FaaSrLog": "FaaSrLog",
+  "LoggingDataStore": "S3",
+  "WorkflowName": "ZentraFetchMultipleLoggersTest"
+}
