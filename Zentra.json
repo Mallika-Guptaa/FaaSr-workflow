@@ -1,0 +1,57 @@
+{
+  "ActionList": {
+    "GetZentraData": {
+      "Arguments": {
+        "serial_number": "z6-19594",
+        "min_hours": 24
+      },
+      "InvokeNext": ["AppendZentraData"],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "download_zentra_readings"
+    },
+    "AppendZentraData": {
+      "Arguments": {
+        "serial_number": "z6-19594"
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "append_zentra_segment"
+    }
+  },
+  "ComputeServers": {
+    "GH": {
+      "FaaSType": "GitHubActions",
+      "UseSecretStore": true,
+      "ActionRepoName": "FaaSr-workflow",
+      "Branch": "main",
+      "UserName": "Mallika-Guptaa"
+    }
+  },
+  "DataStores": {
+    "S3": {
+      "Endpoint": "https://s3.us-east-005.backblazeb2.com",
+      "Bucket": "1check",
+      "Region": "us-east-005"
+    }
+  },
+  "ActionContainers": {
+    "GetZentraData": "ghcr.io/faasr/github-actions-python:latest",
+    "AppendZentraData": "ghcr.io/faasr/github-actions-python:latest"
+  },
+  "FunctionInvoke": "GetZentraData",
+  "DefaultDataStore": "S3",
+  "FunctionGitRepo": {
+    "download_zentra_readings": "Mallika-Guptaa/FaaSr-Zentra/python",
+    "append_zentra_segment": "Mallika-Gupta/FaaSr-Zentra/python"
+  },
+  "PyPIPackageDownloads": {
+    "download_zentra_readings": ["pandas", "requests"],
+    "append_zentra_segment": ["pandas"]
+  },
+  "Secrets": ["ZENTRA_TOKEN"],
+  "FaaSrLog": "FaaSrLog",
+  "LoggingDataStore": "S3",
+  "WorkflowName": "Zentra"
+}
