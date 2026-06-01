@@ -3,25 +3,25 @@
     "StartParallelBackfill": {
       "Arguments": {},
       "InvokeNext": [
-        "Backfill_z6_19600",
-        "Backfill_z6_12196",
-        "Backfill_z6_19602",
-        "Backfill_z6_19604",
-        "Backfill_z6_19597",
-        "Backfill_z6_19594",
-        "Backfill_z6_19599",
-        "Backfill_z6_12197",
-        "Backfill_z6_19595",
-        "Backfill_z6_19598",
-        "Backfill_z6_12202",
-        "Backfill_z6_19596",
-        "Backfill_z6_19603"
+        "Backfill-z6-19600",
+        "Backfill-z6-12196",
+        "Backfill-z6-19602",
+        "Backfill-z6-19604",
+        "Backfill-z6-19597",
+        "Backfill-z6-19594",
+        "Backfill-z6-19599",
+        "Backfill-z6-12197",
+        "Backfill-z6-19595",
+        "Backfill-z6-19598",
+        "Backfill-z6-12202",
+        "Backfill-z6-19596",
+        "Backfill-z6-19603"
       ],
       "FaaSServer": "GH",
       "Type": "Python",
       "FunctionName": "initialize_parallel_backfill"
     },
-    "Backfill_z6_19600": {
+    "Backfill-z6-19600": {
       "Arguments": {
         "serial_numbers": "z6-19600",
         "start_date": "2024-04-04 00:00:00",
@@ -39,7 +39,7 @@
       "Type": "Python",
       "FunctionName": "backfill_zentra_history"
     },
-    "Backfill_z6_12196": {
+    "Backfill-z6-12196": {
       "Arguments": {
         "serial_numbers": "z6-12196",
         "start_date": "2024-04-04 00:00:00",
@@ -57,7 +57,7 @@
       "Type": "Python",
       "FunctionName": "backfill_zentra_history"
     },
-    "Backfill_z6_19602": {
+    "Backfill-z6-19602": {
       "Arguments": {
         "serial_numbers": "z6-19602",
         "start_date": "2024-04-04 00:00:00",
@@ -75,7 +75,7 @@
       "Type": "Python",
       "FunctionName": "backfill_zentra_history"
     },
-    "Backfill_z6_19604": {
+    "Backfill-z6-19604": {
       "Arguments": {
         "serial_numbers": "z6-19604",
         "start_date": "2024-04-04 00:00:00",
@@ -93,7 +93,7 @@
       "Type": "Python",
       "FunctionName": "backfill_zentra_history"
     },
-    "Backfill_z6_19597": {
+    "Backfill-z6-19597": {
       "Arguments": {
         "serial_numbers": "z6-19597",
         "start_date": "2024-04-04 00:00:00",
@@ -111,7 +111,7 @@
       "Type": "Python",
       "FunctionName": "backfill_zentra_history"
     },
-    "Backfill_z6_19594": {
+    "Backfill-z6-19594": {
       "Arguments": {
         "serial_numbers": "z6-19594",
         "start_date": "2024-04-04 00:00:00",
@@ -129,7 +129,7 @@
       "Type": "Python",
       "FunctionName": "backfill_zentra_history"
     },
-    "Backfill_z6_19599": {
+    "Backfill-z6-19599": {
       "Arguments": {
         "serial_numbers": "z6-19599",
         "start_date": "2024-04-04 00:00:00",
@@ -147,7 +147,7 @@
       "Type": "Python",
       "FunctionName": "backfill_zentra_history"
     },
-    "Backfill_z6_12197": {
+    "Backfill-z6-12197": {
       "Arguments": {
         "serial_numbers": "z6-12197",
         "start_date": "2024-04-04 00:00:00",
@@ -165,7 +165,7 @@
       "Type": "Python",
       "FunctionName": "backfill_zentra_history"
     },
-    "Backfill_z6_19595": {
+    "Backfill-z6-19595": {
       "Arguments": {
         "serial_numbers": "z6-19595",
         "start_date": "2024-04-04 00:00:00",
@@ -183,7 +183,7 @@
       "Type": "Python",
       "FunctionName": "backfill_zentra_history"
     },
-    "Backfill_z6_19598": {
+    "Backfill-z6-19598": {
       "Arguments": {
         "serial_numbers": "z6-19598",
         "start_date": "2024-04-04 00:00:00",
@@ -201,7 +201,7 @@
       "Type": "Python",
       "FunctionName": "backfill_zentra_history"
     },
-    "Backfill_z6_12202": {
+    "Backfill-z6-12202": {
       "Arguments": {
         "serial_numbers": "z6-12202",
         "start_date": "2024-04-04 00:00:00",
@@ -219,7 +219,7 @@
       "Type": "Python",
       "FunctionName": "backfill_zentra_history"
     },
-    "Backfill_z6_19596": {
+    "Backfill-z6-19596": {
       "Arguments": {
         "serial_numbers": "z6-19596",
         "start_date": "2024-04-04 00:00:00",
@@ -237,7 +237,7 @@
       "Type": "Python",
       "FunctionName": "backfill_zentra_history"
     },
-    "Backfill_z6_19603": {
+    "Backfill-z6-19603": {
       "Arguments": {
         "serial_numbers": "z6-19603",
         "start_date": "2024-04-04 00:00:00",
@@ -274,19 +274,19 @@
   },
   "ActionContainers": {
     "StartParallelBackfill": "ghcr.io/faasr/github-actions-python:latest",
-    "Backfill_z6_19600": "ghcr.io/faasr/github-actions-python:latest",
-    "Backfill_z6_12196": "ghcr.io/faasr/github-actions-python:latest",
-    "Backfill_z6_19602": "ghcr.io/faasr/github-actions-python:latest",
-    "Backfill_z6_19604": "ghcr.io/faasr/github-actions-python:latest",
-    "Backfill_z6_19597": "ghcr.io/faasr/github-actions-python:latest",
-    "Backfill_z6_19594": "ghcr.io/faasr/github-actions-python:latest",
-    "Backfill_z6_19599": "ghcr.io/faasr/github-actions-python:latest",
-    "Backfill_z6_12197": "ghcr.io/faasr/github-actions-python:latest",
-    "Backfill_z6_19595": "ghcr.io/faasr/github-actions-python:latest",
-    "Backfill_z6_19598": "ghcr.io/faasr/github-actions-python:latest",
-    "Backfill_z6_12202": "ghcr.io/faasr/github-actions-python:latest",
-    "Backfill_z6_19596": "ghcr.io/faasr/github-actions-python:latest",
-    "Backfill_z6_19603": "ghcr.io/faasr/github-actions-python:latest"
+    "Backfill-z6-19600": "ghcr.io/faasr/github-actions-python:latest",
+    "Backfill-z6-12196": "ghcr.io/faasr/github-actions-python:latest",
+    "Backfill-z6-19602": "ghcr.io/faasr/github-actions-python:latest",
+    "Backfill-z6-19604": "ghcr.io/faasr/github-actions-python:latest",
+    "Backfill-z6-19597": "ghcr.io/faasr/github-actions-python:latest",
+    "Backfill-z6-19594": "ghcr.io/faasr/github-actions-python:latest",
+    "Backfill-z6-19599": "ghcr.io/faasr/github-actions-python:latest",
+    "Backfill-z6-12197": "ghcr.io/faasr/github-actions-python:latest",
+    "Backfill-z6-19595": "ghcr.io/faasr/github-actions-python:latest",
+    "Backfill-z6-19598": "ghcr.io/faasr/github-actions-python:latest",
+    "Backfill-z6-12202": "ghcr.io/faasr/github-actions-python:latest",
+    "Backfill-z6-19596": "ghcr.io/faasr/github-actions-python:latest",
+    "Backfill-z6-19603": "ghcr.io/faasr/github-actions-python:latest"
   },
   "FunctionInvoke": "StartParallelBackfill",
   "DefaultDataStore": "S3",
