@@ -295,7 +295,10 @@
     "backfill_zentra_history": "Mallika-Guptaa/zentra_backfill_workflow_files/python"
   },
   "PyPIPackageDownloads": {
-    "initialize_parallel_backfill": [],
+    "initialize_parallel_backfill": [
+      "pandas",
+      "requests"
+    ],
     "backfill_zentra_history": [
       "pandas",
       "requests"
