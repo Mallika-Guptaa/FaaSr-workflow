@@ -19,8 +19,6 @@ jobs:
             GH_PAT: ${{ secrets.GH_PAT}}
             S3PRIVATE_AccessKey: ${{ secrets.S3PRIVATE_AccessKey}}
             S3PRIVATE_SecretKey: ${{ secrets.S3PRIVATE_SecretKey}}
-            S3PRIVATE_ACCESSKEY: ${{ secrets.S3PRIVATE_ACCESSKEY}}
-            S3PRIVATE_SECRETKEY: ${{ secrets.S3PRIVATE_SECRETKEY}}
             OVERWRITTEN: ${{ github.event.inputs.OVERWRITTEN }}
             PAYLOAD_URL: ${{ github.event.inputs.PAYLOAD_URL }}
 
