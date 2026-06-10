@@ -20,6 +20,9 @@ jobs:
             S3PRIVATE_AccessKey: ${{ secrets.S3PRIVATE_AccessKey}}
             S3PRIVATE_SecretKey: ${{ secrets.S3PRIVATE_SecretKey}}
             ZENTRA_TOKEN: ${{ secrets.ZENTRA_TOKEN}}
+            RESEND_API_KEY: ${{ secrets.RESEND_API_KEY}}
+            ALERT_EMAIL_FROM: ${{ secrets.ALERT_EMAIL_FROM}}
+            ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO}}
             OVERWRITTEN: ${{ github.event.inputs.OVERWRITTEN }}
             PAYLOAD_URL: ${{ github.event.inputs.PAYLOAD_URL }}
 
