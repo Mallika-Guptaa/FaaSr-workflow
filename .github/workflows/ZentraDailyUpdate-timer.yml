@@ -2,7 +2,7 @@ name: ' (ZentraDailyUpdate TIMER)'
 
 on:
   schedule:
-    - cron: "0 8 * * *"
+    - cron: "17 8 * * *"
   workflow_dispatch:
 
 jobs:
@@ -39,4 +39,4 @@ jobs:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           echo "GODEBUG=x509ignoreCN=0" >> $GITHUB_ENV
-          python scripts/invoke_workflow.py --workflow-file ZentraDailyUpdate_S3PRIVATE.json
+          python scripts/invoke_workflow.py --workflow-file ZentraDailyUpdate_S3PRIVATE_STRICT_INCREMENTAL.json
