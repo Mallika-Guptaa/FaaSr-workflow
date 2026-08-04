@@ -1,0 +1,75 @@
+{
+  "ActionList": {
+    "MakeNumbers": {
+      "Arguments": {
+        "folder_name": "CodexSmokeTest",
+        "output_name": "numbers.json",
+        "start": "3",
+        "count": "4"
+      },
+      "InvokeNext": [
+        "SquareNumbers"
+      ],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "make_numbers"
+    },
+    "SquareNumbers": {
+      "Arguments": {
+        "folder_name": "CodexSmokeTest",
+        "input_name": "numbers.json",
+        "output_name": "squares.json"
+      },
+      "InvokeNext": [
+        "SummarizeNumbers"
+      ],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "square_numbers"
+    },
+    "SummarizeNumbers": {
+      "Arguments": {
+        "folder_name": "CodexSmokeTest",
+        "input_name": "squares.json",
+        "output_name": "summary.txt"
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "summarize_numbers"
+    }
+  },
+  "ComputeServers": {
+    "GH": {
+      "FaaSType": "GitHubActions",
+      "UseSecretStore": true,
+      "ActionRepoName": "FaaSr-workflow",
+      "Branch": "main",
+      "UserName": "Mallika-Guptaa"
+    }
+  },
+  "DataStores": {
+    "S3": {
+      "Writable": "TRUE",
+      "Endpoint": "https://s3.us-east-005.backblazeb2.com",
+      "Bucket": "1check",
+      "Region": "us-east-005"
+    }
+  },
+  "ActionContainers": {
+    "MakeNumbers": "ghcr.io/faasr/github-actions-python:latest",
+    "SquareNumbers": "ghcr.io/faasr/github-actions-python:latest",
+    "SummarizeNumbers": "ghcr.io/faasr/github-actions-python:latest"
+  },
+  "FunctionInvoke": "MakeNumbers",
+  "DefaultDataStore": "S3",
+  "FunctionGitRepo": {
+    "make_numbers": "Mallika-Guptaa/faasr-codex-smoke-functions/python",
+    "square_numbers": "Mallika-Guptaa/faasr-codex-smoke-functions/python",
+    "summarize_numbers": "Mallika-Guptaa/faasr-codex-smoke-functions/python"
+  },
+  "PyPIPackageDownloads": {},
+  "FaaSrLog": "FaaSrLog",
+  "LoggingDataStore": "S3",
+  "WorkflowName": "CodexSmokeTest"
+}
