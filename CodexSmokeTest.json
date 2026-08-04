@@ -68,7 +68,11 @@
     "square_numbers": "Mallika-Guptaa/faasr-codex-smoke-functions/python",
     "summarize_numbers": "Mallika-Guptaa/faasr-codex-smoke-functions/python"
   },
-  "PyPIPackageDownloads": {},
+  "PyPIPackageDownloads": {
+    "make_numbers": [],
+    "square_numbers": [],
+    "summarize_numbers": []
+  },
   "FaaSrLog": "FaaSrLog",
   "LoggingDataStore": "S3",
   "WorkflowName": "CodexSmokeTest"
