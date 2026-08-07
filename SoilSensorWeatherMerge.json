@@ -58,10 +58,31 @@
         "final_file": "soil_moisture_weather_merged.csv",
         "final_manifest_file": "final_merge_manifest.json"
       },
-      "InvokeNext": [],
+      "InvokeNext": [
+        "DetectClassifyReconstructGaps"
+      ],
       "FaaSServer": "GH",
       "Type": "Python",
       "FunctionName": "create_final_merged_csv"
+    },
+    "DetectClassifyReconstructGaps": {
+      "Arguments": {
+        "output_prefix": "soil_sensor_processing/output",
+        "gap_prefix": "soil_sensor_processing/gap_reconstruction",
+        "merged_file": "soil_moisture_weather_merged.csv",
+        "agrimet_file": "agrimet_daily.csv",
+        "gridmet_file": "gridmet_daily_by_site.csv",
+        "reconstructed_file": "soil_moisture_gap_reconstructed.csv",
+        "gap_catalog_file": "soil_moisture_gap_catalog.csv",
+        "sensor_summary_file": "soil_moisture_gap_sensor_summary.csv",
+        "gap_manifest_file": "gap_reconstruction_manifest.json",
+        "short_gap_max_steps": 6,
+        "expected_weekdays": "auto"
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "reconstruct_missing_gaps"
     }
   },
   "ComputeServers": {
@@ -84,7 +105,8 @@
     "LoadSoilInputs": "ghcr.io/faasr/github-actions-python:latest",
     "DownloadMergeWeather": "ghcr.io/faasr/github-actions-python:latest",
     "DetectSensorMalfunctions": "ghcr.io/faasr/github-actions-python:latest",
-    "CreateFinalMergedCSV": "ghcr.io/faasr/github-actions-python:latest"
+    "CreateFinalMergedCSV": "ghcr.io/faasr/github-actions-python:latest",
+    "DetectClassifyReconstructGaps": "ghcr.io/faasr/github-actions-python:latest"
   },
   "FunctionInvoke": "LoadSoilInputs",
   "DefaultDataStore": "S3PRIVATE",
@@ -92,7 +114,8 @@
     "load_soil_inputs": "Mallika-Guptaa/soil-senors/python",
     "download_weather_data": "Mallika-Guptaa/soil-senors/python",
     "detect_sensor_malfunctions": "Mallika-Guptaa/soil-senors/python",
-    "create_final_merged_csv": "Mallika-Guptaa/soil-senors/python"
+    "create_final_merged_csv": "Mallika-Guptaa/soil-senors/python",
+    "reconstruct_missing_gaps": "Mallika-Guptaa/soil-senors/python"
   },
   "PyPIPackageDownloads": {
     "load_soil_inputs": [
@@ -110,6 +133,13 @@
     "create_final_merged_csv": [
       "pandas",
       "requests"
+    ],
+    "reconstruct_missing_gaps": [
+      "pandas",
+      "requests",
+      "scipy",
+      "scikit-learn",
+      "xgboost"
     ]
   },
   "Secrets": [],
