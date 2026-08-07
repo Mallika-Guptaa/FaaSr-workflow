@@ -23,10 +23,45 @@
         "request_timeout_seconds": 90,
         "gridmet_workers": 4
       },
+      "InvokeNext": [
+        "DetectSensorMalfunctions"
+      ],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "download_weather_data"
+    },
+    "DetectSensorMalfunctions": {
+      "Arguments": {
+        "staging_prefix": "soil_sensor_processing/staging",
+        "qc_prefix": "soil_sensor_processing/qc",
+        "sensor_file": "sensor_observations_standardized.csv",
+        "cleaned_sensor_file": "sensor_observations_qc_cleaned.csv",
+        "removed_sensor_file": "sensor_observations_qc_removed.csv",
+        "qc_manifest_file": "sensor_qc_manifest.json",
+        "problem_layer_depth": 6,
+        "site2_cutoff_date": "2025-07-15"
+      },
+      "InvokeNext": [
+        "CreateFinalMergedCSV"
+      ],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "detect_sensor_malfunctions"
+    },
+    "CreateFinalMergedCSV": {
+      "Arguments": {
+        "qc_prefix": "soil_sensor_processing/qc",
+        "output_prefix": "soil_sensor_processing/output",
+        "cleaned_sensor_file": "sensor_observations_qc_cleaned.csv",
+        "agrimet_file": "agrimet_daily.csv",
+        "gridmet_file": "gridmet_daily_by_site.csv",
+        "final_file": "soil_moisture_weather_merged.csv",
+        "final_manifest_file": "final_merge_manifest.json"
+      },
       "InvokeNext": [],
       "FaaSServer": "GH",
       "Type": "Python",
-      "FunctionName": "download_merge_weather"
+      "FunctionName": "create_final_merged_csv"
     }
   },
   "ComputeServers": {
@@ -47,20 +82,32 @@
   },
   "ActionContainers": {
     "LoadSoilInputs": "ghcr.io/faasr/github-actions-python:latest",
-    "DownloadMergeWeather": "ghcr.io/faasr/github-actions-python:latest"
+    "DownloadMergeWeather": "ghcr.io/faasr/github-actions-python:latest",
+    "DetectSensorMalfunctions": "ghcr.io/faasr/github-actions-python:latest",
+    "CreateFinalMergedCSV": "ghcr.io/faasr/github-actions-python:latest"
   },
   "FunctionInvoke": "LoadSoilInputs",
   "DefaultDataStore": "S3PRIVATE",
   "FunctionGitRepo": {
     "load_soil_inputs": "Mallika-Guptaa/soil-senors/python",
-    "download_merge_weather": "Mallika-Guptaa/soil-senors/python"
+    "download_weather_data": "Mallika-Guptaa/soil-senors/python",
+    "detect_sensor_malfunctions": "Mallika-Guptaa/soil-senors/python",
+    "create_final_merged_csv": "Mallika-Guptaa/soil-senors/python"
   },
   "PyPIPackageDownloads": {
     "load_soil_inputs": [
       "pandas",
       "requests"
     ],
-    "download_merge_weather": [
+    "download_weather_data": [
+      "pandas",
+      "requests"
+    ],
+    "detect_sensor_malfunctions": [
+      "pandas",
+      "requests"
+    ],
+    "create_final_merged_csv": [
       "pandas",
       "requests"
     ]
