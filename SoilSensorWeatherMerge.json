@@ -138,10 +138,38 @@
         "minimum_row_improvement": 0.005,
         "maximum_correction": 0.1
       },
-      "InvokeNext": [],
+      "InvokeNext": [
+        "SmoothAndValidateFinalDataset"
+      ],
       "FaaSServer": "GH",
       "Type": "Python",
       "FunctionName": "detect_and_correct_bias"
+    },
+    "SmoothAndValidateFinalDataset": {
+      "Arguments": {
+        "bias_prefix": "soil_sensor_processing/bias_correction",
+        "outlier_prefix": "soil_sensor_processing/outlier_detection",
+        "final_prefix": "soil_sensor_processing/final",
+        "bias_corrected_file": "soil_moisture_bias_corrected.csv",
+        "outlier_flagged_file": "soil_moisture_outlier_flagged.csv",
+        "final_file": "final_soil_moisture_csv.csv",
+        "validation_metrics_file": "temporal_smoothing_validation_metrics.csv",
+        "physical_checks_file": "physical_consistency_checks.csv",
+        "final_manifest_file": "final_processing_manifest.json",
+        "moving_average_window": 3,
+        "savgol_window": 5,
+        "savgol_polynomial_order": 2,
+        "low_pass_cutoff": 0.35,
+        "low_pass_order": 2,
+        "maximum_smoothing_adjustment": 0.03,
+        "rain_event_threshold": 1.0,
+        "dry_threshold": 0.5,
+        "physical_response_tolerance": 0.02
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "smooth_and_validate_final_dataset"
     }
   },
   "ComputeServers": {
@@ -167,7 +195,8 @@
     "CreateFinalMergedCSV": "ghcr.io/faasr/github-actions-python:latest",
     "DetectClassifyReconstructGaps": "ghcr.io/faasr/github-actions-python:latest",
     "DetectOutliers": "ghcr.io/faasr/github-actions-python:latest",
-    "DetectAndCorrectBias": "ghcr.io/faasr/github-actions-python:latest"
+    "DetectAndCorrectBias": "ghcr.io/faasr/github-actions-python:latest",
+    "SmoothAndValidateFinalDataset": "ghcr.io/faasr/github-actions-python:latest"
   },
   "FunctionInvoke": "LoadSoilInputs",
   "DefaultDataStore": "S3PRIVATE",
@@ -178,7 +207,8 @@
     "create_final_merged_csv": "Mallika-Guptaa/soil-senors/python",
     "reconstruct_missing_gaps": "Mallika-Guptaa/soil-senors/python",
     "detect_outliers": "Mallika-Guptaa/soil-senors/python",
-    "detect_and_correct_bias": "Mallika-Guptaa/soil-senors/python"
+    "detect_and_correct_bias": "Mallika-Guptaa/soil-senors/python",
+    "smooth_and_validate_final_dataset": "Mallika-Guptaa/soil-senors/python"
   },
   "PyPIPackageDownloads": {
     "load_soil_inputs": [
@@ -213,6 +243,11 @@
     "detect_and_correct_bias": [
       "pandas",
       "requests"
+    ],
+    "smooth_and_validate_final_dataset": [
+      "pandas",
+      "requests",
+      "scipy"
     ]
   },
   "Secrets": [
