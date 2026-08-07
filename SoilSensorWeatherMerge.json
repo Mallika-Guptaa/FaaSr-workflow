@@ -1,0 +1,72 @@
+{
+  "ActionList": {
+    "LoadSoilInputs": {
+      "Arguments": {
+        "sensor_csv_path": "data/sites_vwc_corrected.csv",
+        "site_locations_path": "data/site_locations.json",
+        "staging_prefix": "soil_sensor_processing/staging"
+      },
+      "InvokeNext": [
+        "DownloadMergeWeather"
+      ],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "load_soil_inputs"
+    },
+    "DownloadMergeWeather": {
+      "Arguments": {
+        "staging_prefix": "soil_sensor_processing/staging",
+        "output_prefix": "soil_sensor_processing/output",
+        "sensor_file": "sensor_observations_standardized.csv",
+        "locations_file": "site_locations.json",
+        "agrimet_station": "BEWO",
+        "request_timeout_seconds": 90,
+        "gridmet_workers": 4
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "download_merge_weather"
+    }
+  },
+  "ComputeServers": {
+    "GH": {
+      "FaaSType": "GitHubActions",
+      "UseSecretStore": true,
+      "ActionRepoName": "FaaSr-workflow",
+      "Branch": "main",
+      "UserName": "Mallika-Guptaa"
+    }
+  },
+  "DataStores": {
+    "S3PRIVATE": {
+      "Bucket": "faasr-bucket-smarttap-private",
+      "Region": "us-east-1",
+      "Writable": "TRUE"
+    }
+  },
+  "ActionContainers": {
+    "LoadSoilInputs": "ghcr.io/faasr/github-actions-python:latest",
+    "DownloadMergeWeather": "ghcr.io/faasr/github-actions-python:latest"
+  },
+  "FunctionInvoke": "LoadSoilInputs",
+  "DefaultDataStore": "S3PRIVATE",
+  "FunctionGitRepo": {
+    "load_soil_inputs": "Mallika-Guptaa/soil-senors/python",
+    "download_merge_weather": "Mallika-Guptaa/soil-senors/python"
+  },
+  "PyPIPackageDownloads": {
+    "load_soil_inputs": [
+      "pandas",
+      "requests"
+    ],
+    "download_merge_weather": [
+      "pandas",
+      "requests"
+    ]
+  },
+  "Secrets": [],
+  "FaaSrLog": "FaaSrLog",
+  "LoggingDataStore": "S3PRIVATE",
+  "WorkflowName": "SoilSensorWeatherMerge"
+}
