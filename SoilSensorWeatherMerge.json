@@ -107,10 +107,41 @@
         "dbscan_distance_quantile": 0.99,
         "random_state": 42
       },
-      "InvokeNext": [],
+      "InvokeNext": [
+        "DetectAndCorrectBias"
+      ],
       "FaaSServer": "GH",
       "Type": "Python",
       "FunctionName": "detect_outliers"
+    },
+    "DetectAndCorrectBias": {
+      "Arguments": {
+        "outlier_prefix": "soil_sensor_processing/outlier_detection",
+        "staging_prefix": "soil_sensor_processing/staging",
+        "bias_prefix": "soil_sensor_processing/bias_correction",
+        "flagged_file": "soil_moisture_outlier_flagged.csv",
+        "locations_file": "site_locations.json",
+        "wldas_file": "wldas_daily_by_site.csv",
+        "corrected_file": "soil_moisture_bias_corrected.csv",
+        "correction_catalog_file": "soil_moisture_bias_correction_catalog.csv",
+        "sensor_summary_file": "soil_moisture_bias_sensor_summary.csv",
+        "bias_manifest_file": "bias_correction_manifest.json",
+        "request_timeout_seconds": 90,
+        "minimum_reference_coverage": 0.9,
+        "minimum_training_pairs": 20,
+        "systematic_bias_threshold": 0.03,
+        "same_direction_share_threshold": 0.7,
+        "minimum_cv_improvement": 0.1,
+        "outlier_reference_difference_threshold": 0.08,
+        "outlier_residual_departure_threshold": 0.05,
+        "outlier_reference_weight": 0.5,
+        "minimum_row_improvement": 0.005,
+        "maximum_correction": 0.1
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "detect_and_correct_bias"
     }
   },
   "ComputeServers": {
@@ -135,7 +166,8 @@
     "DetectSensorMalfunctions": "ghcr.io/faasr/github-actions-python:latest",
     "CreateFinalMergedCSV": "ghcr.io/faasr/github-actions-python:latest",
     "DetectClassifyReconstructGaps": "ghcr.io/faasr/github-actions-python:latest",
-    "DetectOutliers": "ghcr.io/faasr/github-actions-python:latest"
+    "DetectOutliers": "ghcr.io/faasr/github-actions-python:latest",
+    "DetectAndCorrectBias": "ghcr.io/faasr/github-actions-python:latest"
   },
   "FunctionInvoke": "LoadSoilInputs",
   "DefaultDataStore": "S3PRIVATE",
@@ -145,7 +177,8 @@
     "detect_sensor_malfunctions": "Mallika-Guptaa/soil-senors/python",
     "create_final_merged_csv": "Mallika-Guptaa/soil-senors/python",
     "reconstruct_missing_gaps": "Mallika-Guptaa/soil-senors/python",
-    "detect_outliers": "Mallika-Guptaa/soil-senors/python"
+    "detect_outliers": "Mallika-Guptaa/soil-senors/python",
+    "detect_and_correct_bias": "Mallika-Guptaa/soil-senors/python"
   },
   "PyPIPackageDownloads": {
     "load_soil_inputs": [
@@ -176,9 +209,15 @@
       "requests",
       "scikit-learn",
       "statsmodels"
+    ],
+    "detect_and_correct_bias": [
+      "pandas",
+      "requests"
     ]
   },
-  "Secrets": [],
+  "Secrets": [
+    "CLIMATE_ENGINE_API_KEY"
+  ],
   "FaaSrLog": "FaaSrLog",
   "LoggingDataStore": "S3PRIVATE",
   "WorkflowName": "SoilSensorWeatherMerge"
