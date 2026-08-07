@@ -79,10 +79,38 @@
         "short_gap_max_steps": 6,
         "expected_weekdays": "auto"
       },
-      "InvokeNext": [],
+      "InvokeNext": [
+        "DetectOutliers"
+      ],
       "FaaSServer": "GH",
       "Type": "Python",
       "FunctionName": "reconstruct_missing_gaps"
+    },
+    "DetectOutliers": {
+      "Arguments": {
+        "gap_prefix": "soil_sensor_processing/gap_reconstruction",
+        "outlier_prefix": "soil_sensor_processing/outlier_detection",
+        "reconstructed_file": "soil_moisture_gap_reconstructed.csv",
+        "flagged_file": "soil_moisture_outlier_flagged.csv",
+        "outlier_catalog_file": "soil_moisture_outlier_catalog.csv",
+        "sensor_summary_file": "soil_moisture_outlier_sensor_summary.csv",
+        "outlier_manifest_file": "outlier_detection_manifest.json",
+        "moving_window": 7,
+        "minimum_absolute_deviation": 0.03,
+        "z_threshold": 3,
+        "modified_z_threshold": 3.5,
+        "hampel_threshold": 3,
+        "iqr_multiplier": 1.5,
+        "stl_period_steps": 156,
+        "stl_min_cycles": 2,
+        "machine_learning_contamination": 0.01,
+        "dbscan_distance_quantile": 0.99,
+        "random_state": 42
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "detect_outliers"
     }
   },
   "ComputeServers": {
@@ -106,7 +134,8 @@
     "DownloadMergeWeather": "ghcr.io/faasr/github-actions-python:latest",
     "DetectSensorMalfunctions": "ghcr.io/faasr/github-actions-python:latest",
     "CreateFinalMergedCSV": "ghcr.io/faasr/github-actions-python:latest",
-    "DetectClassifyReconstructGaps": "ghcr.io/faasr/github-actions-python:latest"
+    "DetectClassifyReconstructGaps": "ghcr.io/faasr/github-actions-python:latest",
+    "DetectOutliers": "ghcr.io/faasr/github-actions-python:latest"
   },
   "FunctionInvoke": "LoadSoilInputs",
   "DefaultDataStore": "S3PRIVATE",
@@ -115,7 +144,8 @@
     "download_weather_data": "Mallika-Guptaa/soil-senors/python",
     "detect_sensor_malfunctions": "Mallika-Guptaa/soil-senors/python",
     "create_final_merged_csv": "Mallika-Guptaa/soil-senors/python",
-    "reconstruct_missing_gaps": "Mallika-Guptaa/soil-senors/python"
+    "reconstruct_missing_gaps": "Mallika-Guptaa/soil-senors/python",
+    "detect_outliers": "Mallika-Guptaa/soil-senors/python"
   },
   "PyPIPackageDownloads": {
     "load_soil_inputs": [
@@ -140,6 +170,12 @@
       "scipy",
       "scikit-learn",
       "xgboost"
+    ],
+    "detect_outliers": [
+      "pandas",
+      "requests",
+      "scikit-learn",
+      "statsmodels"
     ]
   },
   "Secrets": [],
