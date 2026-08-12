@@ -1,0 +1,53 @@
+name: SoilSensorWeatherMerge-RegisterAndInvoke
+
+on:
+  push:
+    paths:
+      - ".github/workflows/SoilSensorWeatherMerge-RunWithPlots.yml"
+  workflow_dispatch:
+
+jobs:
+  register-and-invoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install FaaSr dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install boto3 pyyaml PyGithub requests jsonschema cryptography FaaSr_py
+
+      - name: Register soil workflow
+        env:
+          CUSTOM_CONTAINER: "false"
+          OW_APIkey: ${{ secrets.OW_APIkey }}
+          AWS_AccessKey: ${{ secrets.AWS_AccessKey }}
+          AWS_SecretKey: ${{ secrets.AWS_SecretKey }}
+          AWS_ARN: ${{ secrets.AWS_ARN }}
+          GCP_SecretKey: ${{ secrets.GCP_SecretKey }}
+          SLURM_Token: ${{ secrets.SLURM_Token }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          python scripts/register_workflow.py --workflow-file SoilSensorWeatherMerge.json
+
+      - name: Allow generated workflows to become available
+        run: sleep 15
+
+      - name: Invoke soil workflow
+        env:
+          OW_APIkey: ${{ secrets.OW_APIkey }}
+          AWS_AccessKey: ${{ secrets.AWS_AccessKey }}
+          AWS_SecretKey: ${{ secrets.AWS_SecretKey }}
+          GCP_SecretKey: ${{ secrets.GCP_SecretKey }}
+          SLURM_Token: ${{ secrets.SLURM_Token }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          python scripts/invoke_workflow.py --workflow-file SoilSensorWeatherMerge.json
