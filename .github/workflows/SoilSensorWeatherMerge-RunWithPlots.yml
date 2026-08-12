@@ -1,5 +1,6 @@
 name: SoilSensorWeatherMerge-RegisterAndInvoke
 
+# Rerun reason: generate four site-specific comparison plots per action.
 on:
   push:
     paths:
