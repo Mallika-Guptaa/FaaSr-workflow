@@ -4,7 +4,8 @@
       "Arguments": {
         "sensor_csv_path": "data/sites_vwc_corrected.csv",
         "site_locations_path": "data/site_locations.json",
-        "staging_prefix": "soil_sensor_processing/staging"
+        "staging_prefix": "soil_sensor_processing/staging",
+        "comparison_plot_file": "01_load_soil_inputs_comparison.png"
       },
       "InvokeNext": [
         "DownloadMergeWeather"
@@ -21,7 +22,8 @@
         "locations_file": "site_locations.json",
         "agrimet_station": "BEWO",
         "request_timeout_seconds": 90,
-        "gridmet_workers": 4
+        "gridmet_workers": 4,
+        "comparison_plot_file": "02_weather_download_comparison.png"
       },
       "InvokeNext": [
         "DetectSensorMalfunctions"
@@ -39,7 +41,8 @@
         "removed_sensor_file": "sensor_observations_qc_removed.csv",
         "qc_manifest_file": "sensor_qc_manifest.json",
         "problem_layer_depth": 6,
-        "site2_cutoff_date": "2025-07-15"
+        "site2_cutoff_date": "2025-07-15",
+        "comparison_plot_file": "03_sensor_malfunction_qc_comparison.png"
       },
       "InvokeNext": [
         "CreateFinalMergedCSV"
@@ -50,13 +53,16 @@
     },
     "CreateFinalMergedCSV": {
       "Arguments": {
+        "staging_prefix": "soil_sensor_processing/staging",
         "qc_prefix": "soil_sensor_processing/qc",
         "output_prefix": "soil_sensor_processing/output",
+        "original_sensor_file": "sensor_observations_standardized.csv",
         "cleaned_sensor_file": "sensor_observations_qc_cleaned.csv",
         "agrimet_file": "agrimet_daily.csv",
         "gridmet_file": "gridmet_daily_by_site.csv",
         "final_file": "soil_moisture_weather_merged.csv",
-        "final_manifest_file": "final_merge_manifest.json"
+        "final_manifest_file": "final_merge_manifest.json",
+        "comparison_plot_file": "04_weather_merge_comparison.png"
       },
       "InvokeNext": [
         "DetectClassifyReconstructGaps"
@@ -67,8 +73,10 @@
     },
     "DetectClassifyReconstructGaps": {
       "Arguments": {
+        "staging_prefix": "soil_sensor_processing/staging",
         "output_prefix": "soil_sensor_processing/output",
         "gap_prefix": "soil_sensor_processing/gap_reconstruction",
+        "original_sensor_file": "sensor_observations_standardized.csv",
         "merged_file": "soil_moisture_weather_merged.csv",
         "agrimet_file": "agrimet_daily.csv",
         "gridmet_file": "gridmet_daily_by_site.csv",
@@ -77,7 +85,8 @@
         "sensor_summary_file": "soil_moisture_gap_sensor_summary.csv",
         "gap_manifest_file": "gap_reconstruction_manifest.json",
         "short_gap_max_steps": 6,
-        "expected_weekdays": "auto"
+        "expected_weekdays": "auto",
+        "comparison_plot_file": "05_gap_reconstruction_comparison.png"
       },
       "InvokeNext": [
         "DetectOutliers"
@@ -88,8 +97,10 @@
     },
     "DetectOutliers": {
       "Arguments": {
+        "staging_prefix": "soil_sensor_processing/staging",
         "gap_prefix": "soil_sensor_processing/gap_reconstruction",
         "outlier_prefix": "soil_sensor_processing/outlier_detection",
+        "original_sensor_file": "sensor_observations_standardized.csv",
         "reconstructed_file": "soil_moisture_gap_reconstructed.csv",
         "flagged_file": "soil_moisture_outlier_flagged.csv",
         "outlier_catalog_file": "soil_moisture_outlier_catalog.csv",
@@ -105,7 +116,8 @@
         "stl_min_cycles": 2,
         "machine_learning_contamination": 0.01,
         "dbscan_distance_quantile": 0.99,
-        "random_state": 42
+        "random_state": 42,
+        "comparison_plot_file": "06_outlier_detection_comparison.png"
       },
       "InvokeNext": [
         "DetectAndCorrectBias"
@@ -119,6 +131,7 @@
         "outlier_prefix": "soil_sensor_processing/outlier_detection",
         "staging_prefix": "soil_sensor_processing/staging",
         "bias_prefix": "soil_sensor_processing/bias_correction",
+        "original_sensor_file": "sensor_observations_standardized.csv",
         "flagged_file": "soil_moisture_outlier_flagged.csv",
         "locations_file": "site_locations.json",
         "wldas_file": "wldas_daily_by_site.csv",
@@ -136,7 +149,8 @@
         "outlier_residual_departure_threshold": 0.05,
         "outlier_reference_weight": 0.5,
         "minimum_row_improvement": 0.005,
-        "maximum_correction": 0.1
+        "maximum_correction": 0.1,
+        "comparison_plot_file": "07_bias_correction_comparison.png"
       },
       "InvokeNext": [
         "SmoothAndValidateFinalDataset"
@@ -147,9 +161,11 @@
     },
     "SmoothAndValidateFinalDataset": {
       "Arguments": {
+        "staging_prefix": "soil_sensor_processing/staging",
         "bias_prefix": "soil_sensor_processing/bias_correction",
         "outlier_prefix": "soil_sensor_processing/outlier_detection",
         "final_prefix": "soil_sensor_processing/final",
+        "original_sensor_file": "sensor_observations_standardized.csv",
         "bias_corrected_file": "soil_moisture_bias_corrected.csv",
         "outlier_flagged_file": "soil_moisture_outlier_flagged.csv",
         "final_file": "final_soil_moisture_csv.csv",
@@ -164,7 +180,8 @@
         "maximum_smoothing_adjustment": 0.03,
         "rain_event_threshold": 1.0,
         "dry_threshold": 0.5,
-        "physical_response_tolerance": 0.02
+        "physical_response_tolerance": 0.02,
+        "comparison_plot_file": "08_temporal_smoothing_comparison.png"
       },
       "InvokeNext": [],
       "FaaSServer": "GH",
@@ -213,41 +230,49 @@
   "PyPIPackageDownloads": {
     "load_soil_inputs": [
       "pandas",
-      "requests"
+      "requests",
+      "matplotlib"
     ],
     "download_weather_data": [
       "pandas",
-      "requests"
+      "requests",
+      "matplotlib"
     ],
     "detect_sensor_malfunctions": [
       "pandas",
-      "requests"
+      "requests",
+      "matplotlib"
     ],
     "create_final_merged_csv": [
       "pandas",
-      "requests"
+      "requests",
+      "matplotlib"
     ],
     "reconstruct_missing_gaps": [
       "pandas",
       "requests",
       "scipy",
       "scikit-learn",
-      "xgboost"
+      "xgboost",
+      "matplotlib"
     ],
     "detect_outliers": [
       "pandas",
       "requests",
       "scikit-learn",
-      "statsmodels"
+      "statsmodels",
+      "matplotlib"
     ],
     "detect_and_correct_bias": [
       "pandas",
-      "requests"
+      "requests",
+      "matplotlib"
     ],
     "smooth_and_validate_final_dataset": [
       "pandas",
       "requests",
-      "scipy"
+      "scipy",
+      "matplotlib"
     ]
   },
   "Secrets": [
