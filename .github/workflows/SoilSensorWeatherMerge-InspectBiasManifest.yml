@@ -9,100 +9,79 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Read sanitized bias manifest
+      - name: Inspect completed bias and final outputs
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.S3PRIVATE_AccessKey }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.S3PRIVATE_SecretKey }}
           AWS_DEFAULT_REGION: us-east-1
         run: |
+          echo "BIAS MANIFEST"
           aws s3 cp s3://faasr-bucket-smarttap-private/soil_sensor_processing/bias_correction/bias_correction_manifest.json - |
-          jq '{status, reference_source_order, reference_selection_rule, reference_attempts}'
+          jq '{
+            input_rows,
+            output_rows,
+            rows_deleted,
+            row_keys_preserved,
+            original_vwc_column_preserved,
+            reference_rows_available,
+            reference_coverage_fraction,
+            systematically_biased_sensor_series,
+            extreme_outlier_reference_disagreements,
+            corrected_rows,
+            corrected_outlier_rows,
+            correction_counts_by_method,
+            paired_rmse_before,
+            paired_rmse_after,
+            reference_selection
+          }'
 
-      - name: Inspect current Climate Engine response schema
-        env:
-          CLIMATE_ENGINE_API_KEY: ${{ secrets.CLIMATE_ENGINE_API_KEY }}
-        run: |
+          echo "FINAL MANIFEST"
+          aws s3 cp s3://faasr-bucket-smarttap-private/soil_sensor_processing/final/final_processing_manifest.json - |
+          jq '{
+            input_source,
+            bias_corrected_input_used,
+            input_rows,
+            output_rows,
+            rows_deleted,
+            row_keys_preserved,
+            missing_final_values,
+            final_values_outside_0_1,
+            maximum_absolute_smoothing_adjustment_cm3_cm3,
+            selected_sensor_series_by_method,
+            held_out_validation_metrics,
+            held_out_rmse_improvement_vs_baseline_fraction,
+            physical_consistency
+          }'
+
+          aws s3 cp s3://faasr-bucket-smarttap-private/soil_sensor_processing/final/final_soil_moisture_csv.csv /tmp/final.csv
+          aws s3 cp s3://faasr-bucket-smarttap-private/soil_sensor_processing/bias_correction/soil_moisture_reference_daily_by_site.csv /tmp/reference.csv
           python3 - <<'PY'
-          import json
-          import os
-          import urllib.error
-          import urllib.parse
-          import urllib.request
+          import csv
+          import math
 
-          key = os.environ["CLIMATE_ENGINE_API_KEY"]
-          headers = {"Authorization": key, "Content-Type": "application/json"}
-          datasets = {
-              "WLDAS": ["SoilMoist_tavg_0", "SoilMoist_tavg_1", "SoilMoist_tavg_2", "SoilMoist_tavg_3"],
-              "GLDAS": ["SoilMoi0_10cm_inst", "RootMoist_inst"],
-              "CFSV2": [
-                  "Volumetric_Soil_Moisture_Content_depth_below_surface_layer_5_cm",
-                  "Volumetric_Soil_Moisture_Content_depth_below_surface_layer_25_cm",
-                  "Volumetric_Soil_Moisture_Content_depth_below_surface_layer_70_cm",
-                  "Volumetric_Soil_Moisture_Content_depth_below_surface_layer_150_cm",
-              ],
-          }
+          with open("/tmp/final.csv", newline="") as handle:
+              final = list(csv.DictReader(handle))
+          keys = [(row["site_id"], row["date"], row["depth_in"]) for row in final]
+          values = [float(row["vwc_final_cm3_cm3"]) for row in final]
+          print("FINAL CSV CHECK", {
+              "rows": len(final),
+              "unique_keys": len(set(keys)),
+              "sites": sorted({row["site_id"] for row in final}),
+              "date_min": min(row["date"] for row in final),
+              "date_max": max(row["date"] for row in final),
+              "final_vwc_min": min(values),
+              "final_vwc_max": max(values),
+              "nonfinite_final_values": sum(not math.isfinite(value) for value in values),
+          })
 
-          def request(url, method="GET", body=None):
-              data = None if body is None else json.dumps(body).encode()
-              req = urllib.request.Request(url, data=data, headers=headers, method=method)
-              try:
-                  with urllib.request.urlopen(req, timeout=60) as response:
-                      raw = response.read().decode()
-                      return response.status, raw
-              except urllib.error.HTTPError as exc:
-                  return exc.code, exc.read().decode()
-              except Exception as exc:
-                  return 0, f"{type(exc).__name__}: {exc}"
-
-          def summarize(value, depth=0):
-              if depth >= 4:
-                  return type(value).__name__
-              if isinstance(value, dict):
-                  return {k: summarize(v, depth + 1) for k, v in list(value.items())[:15]}
-              if isinstance(value, list):
-                  return {"length": len(value), "sample": [summarize(v, depth + 1) for v in value[:2]]}
-              return type(value).__name__
-
-          for dataset, variables in datasets.items():
-              query = urllib.parse.urlencode({"dataset": dataset})
-              status, raw = request(f"https://api.climateengine.org/metadata/dataset_variables?{query}")
-              print(f"METADATA {dataset} HTTP {status}")
-              try:
-                  metadata = json.loads(raw)
-                  matches = []
-                  def collect(value):
-                      if isinstance(value, dict):
-                          rendered = json.dumps(value)
-                          if "soil" in rendered.lower() or "moist" in rendered.lower():
-                              matches.append(value)
-                          for child in value.values():
-                              collect(child)
-                      elif isinstance(value, list):
-                          for child in value:
-                              collect(child)
-                  collect(metadata)
-                  print(json.dumps(matches[:20], indent=2)[:12000])
-              except Exception:
-                  print(raw[:3000])
-
-              body = {
-                  "coordinates": json.dumps([[-121.394525, 44.158669]]),
-                  "area_reducer": "mean",
-                  "dataset": dataset,
-                  "variable": ", ".join(variables),
-                  "start_date": "2025-06-23",
-                  "end_date": "2025-06-25",
-              }
-              status, raw = request(
-                  "https://api.climateengine.org/timeseries/native/coordinates",
-                  method="POST",
-                  body=body,
-              )
-              print(f"TIMESERIES {dataset} HTTP {status}")
-              try:
-                  parsed = json.loads(raw)
-                  print(json.dumps(summarize(parsed), indent=2)[:10000])
-                  print("SAMPLE", json.dumps(parsed, default=str)[:5000])
-              except Exception:
-                  print(raw[:3000])
+          with open("/tmp/reference.csv", newline="") as handle:
+              reference = list(csv.DictReader(handle))
+          print("REFERENCE CSV CHECK", {
+              "rows": len(reference),
+              "datasets": sorted({row["reference_dataset"] for row in reference}),
+              "sites": sorted({row["site_id"] for row in reference}),
+              "date_min": min(row["date"] for row in reference),
+              "date_max": max(row["date"] for row in reference),
+              "variables": sorted({row["reference_variable"] for row in reference}),
+          })
           PY
