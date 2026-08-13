@@ -1,5 +1,7 @@
 name: SoilSensorWeatherMerge-AuditSite1Bias
 
+# Audit rerun after confidence-gated correction.
+
 on:
   push:
     paths:
@@ -20,6 +22,9 @@ jobs:
           aws s3 cp s3://faasr-bucket-smarttap-private/soil_sensor_processing/bias_correction/soil_moisture_bias_corrected.csv /tmp/action7.csv
           aws s3 cp s3://faasr-bucket-smarttap-private/soil_sensor_processing/bias_correction/soil_moisture_bias_sensor_summary.csv /tmp/summary.csv
           aws s3 cp s3://faasr-bucket-smarttap-private/soil_sensor_processing/final/final_soil_moisture_csv.csv /tmp/action8.csv
+          mkdir -p /tmp/site1-plots
+          aws s3 cp s3://faasr-bucket-smarttap-private/soil_sensor_processing/bias_correction/07_bias_correction_comparison_site_1.png /tmp/site1-plots/
+          aws s3 cp s3://faasr-bucket-smarttap-private/soil_sensor_processing/final/08_temporal_smoothing_comparison_site_1.png /tmp/site1-plots/
 
           python3 - <<'PY'
           import csv
@@ -139,6 +144,11 @@ jobs:
               "median_sensor_minus_reference_before_cm3_cm3",
               "same_direction_residual_share",
               "systematic_bias_detected",
+              "reference_temporal_correlation",
+              "temporal_agreement_passed",
+              "systematic_correction_eligible",
+              "systematic_correction_reason",
+              "best_cross_validated_method",
               "selected_correction_method",
               "selected_model_parameters",
               "baseline_cv_rmse",
@@ -156,3 +166,9 @@ jobs:
                   sort_keys=True,
               ))
           PY
+
+      - name: Upload revised Site 1 plots
+        uses: actions/upload-artifact@v4
+        with:
+          name: revised-site-1-plots
+          path: /tmp/site1-plots/*.png
