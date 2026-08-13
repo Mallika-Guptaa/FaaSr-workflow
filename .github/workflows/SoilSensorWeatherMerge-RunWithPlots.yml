@@ -1,6 +1,6 @@
 name: SoilSensorWeatherMerge-RegisterAndInvoke
 
-# Rerun reason: mark candidate and consensus outliers on each site plot.
+# Rerun reason: verify Climate Engine key and fetch live bias references.
 on:
   push:
     paths:
