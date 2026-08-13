@@ -19,8 +19,8 @@ jobs:
 
       - name: Verify site folders and summaries
         env:
-          AWS_AccessKey: ${{ secrets.AWS_AccessKey }}
-          AWS_SecretKey: ${{ secrets.AWS_SecretKey }}
+          S3PRIVATE_AccessKey: ${{ secrets.S3PRIVATE_AccessKey }}
+          S3PRIVATE_SecretKey: ${{ secrets.S3PRIVATE_SecretKey }}
         run: |
           python - <<'PY'
           import json
@@ -33,8 +33,8 @@ jobs:
           s3 = boto3.client(
               "s3",
               region_name="us-east-1",
-              aws_access_key_id=os.environ["AWS_AccessKey"],
-              aws_secret_access_key=os.environ["AWS_SecretKey"],
+              aws_access_key_id=os.environ["S3PRIVATE_AccessKey"],
+              aws_secret_access_key=os.environ["S3PRIVATE_SecretKey"],
           )
 
           for site_id in range(1, 5):
