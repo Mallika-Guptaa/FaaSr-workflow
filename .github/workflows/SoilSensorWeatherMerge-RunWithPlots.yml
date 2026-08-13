@@ -1,6 +1,6 @@
 name: SoilSensorWeatherMerge-RegisterAndInvoke
 
-# Rerun reason: generate four site-specific comparison plots per action.
+# Rerun reason: add WLDAS, GLDAS, and CFSv2 bias-reference fallbacks.
 on:
   push:
     paths:
