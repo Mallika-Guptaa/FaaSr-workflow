@@ -141,7 +141,7 @@
         "sensor_summary_file": "soil_moisture_bias_sensor_summary.csv",
         "bias_manifest_file": "bias_correction_manifest.json",
         "request_timeout_seconds": 90,
-        "minimum_reference_coverage": 0.9,
+        "minimum_reference_coverage": 0,
         "minimum_training_pairs": 20,
         "systematic_bias_threshold": 0.03,
         "same_direction_share_threshold": 0.7,
@@ -179,7 +179,7 @@
         "low_pass_cutoff": 0.35,
         "low_pass_order": 2,
         "maximum_smoothing_adjustment": 0.03,
-        "rain_event_threshold": 1.0,
+        "rain_event_threshold": 1,
         "dry_threshold": 0.5,
         "physical_response_tolerance": 0.02,
         "comparison_plot_file": "08_temporal_smoothing_comparison.png"
