@@ -1,6 +1,6 @@
 name: SoilSensorWeatherMerge-RegisterAndInvoke
 
-# Rerun reason: verify cached bias output flows into final processing without an API-key proxy.
+# Rerun reason: mark candidate and consensus outliers on each site plot.
 on:
   push:
     paths:
