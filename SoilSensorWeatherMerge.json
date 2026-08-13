@@ -150,8 +150,9 @@
         "outlier_residual_departure_threshold": 0.05,
         "outlier_reference_weight": 0.5,
         "minimum_row_improvement": 0.005,
-        "maximum_correction": 0.1,
-        "comparison_plot_file": "07_bias_correction_comparison.png"
+        "maximum_correction": 0.03,
+        "comparison_plot_file": "07_bias_correction_comparison.png",
+        "minimum_reference_correlation": 0.6
       },
       "InvokeNext": [
         "SmoothAndValidateFinalDataset"
