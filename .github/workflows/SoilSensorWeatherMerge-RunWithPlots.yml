@@ -1,6 +1,6 @@
 name: SoilSensorWeatherMerge-RegisterAndInvoke
 
-# Rerun reason: validate confidence-gated bias correction and stage-to-stage plots.
+# Rerun reason: create per-site plot folders and final JSON summaries.
 on:
   push:
     paths:
