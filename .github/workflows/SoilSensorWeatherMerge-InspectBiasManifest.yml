@@ -17,3 +17,92 @@ jobs:
         run: |
           aws s3 cp s3://faasr-bucket-smarttap-private/soil_sensor_processing/bias_correction/bias_correction_manifest.json - |
           jq '{status, reference_source_order, reference_selection_rule, reference_attempts}'
+
+      - name: Inspect current Climate Engine response schema
+        env:
+          CLIMATE_ENGINE_API_KEY: ${{ secrets.CLIMATE_ENGINE_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+
+          key = os.environ["CLIMATE_ENGINE_API_KEY"]
+          headers = {"Authorization": key, "Content-Type": "application/json"}
+          datasets = {
+              "WLDAS": ["SoilMoist_tavg_0", "SoilMoist_tavg_1", "SoilMoist_tavg_2", "SoilMoist_tavg_3"],
+              "GLDAS": ["SoilMoi0_10cm_inst", "RootMoist_inst"],
+              "CFSV2": [
+                  "Volumetric_Soil_Moisture_Content_depth_below_surface_layer_5_cm",
+                  "Volumetric_Soil_Moisture_Content_depth_below_surface_layer_25_cm",
+                  "Volumetric_Soil_Moisture_Content_depth_below_surface_layer_70_cm",
+                  "Volumetric_Soil_Moisture_Content_depth_below_surface_layer_150_cm",
+              ],
+          }
+
+          def request(url, method="GET", body=None):
+              data = None if body is None else json.dumps(body).encode()
+              req = urllib.request.Request(url, data=data, headers=headers, method=method)
+              try:
+                  with urllib.request.urlopen(req, timeout=60) as response:
+                      raw = response.read().decode()
+                      return response.status, raw
+              except urllib.error.HTTPError as exc:
+                  return exc.code, exc.read().decode()
+              except Exception as exc:
+                  return 0, f"{type(exc).__name__}: {exc}"
+
+          def summarize(value, depth=0):
+              if depth >= 4:
+                  return type(value).__name__
+              if isinstance(value, dict):
+                  return {k: summarize(v, depth + 1) for k, v in list(value.items())[:15]}
+              if isinstance(value, list):
+                  return {"length": len(value), "sample": [summarize(v, depth + 1) for v in value[:2]]}
+              return type(value).__name__
+
+          for dataset, variables in datasets.items():
+              query = urllib.parse.urlencode({"dataset": dataset})
+              status, raw = request(f"https://api.climateengine.org/metadata/dataset_variables?{query}")
+              print(f"METADATA {dataset} HTTP {status}")
+              try:
+                  metadata = json.loads(raw)
+                  matches = []
+                  def collect(value):
+                      if isinstance(value, dict):
+                          rendered = json.dumps(value)
+                          if "soil" in rendered.lower() or "moist" in rendered.lower():
+                              matches.append(value)
+                          for child in value.values():
+                              collect(child)
+                      elif isinstance(value, list):
+                          for child in value:
+                              collect(child)
+                  collect(metadata)
+                  print(json.dumps(matches[:20], indent=2)[:12000])
+              except Exception:
+                  print(raw[:3000])
+
+              body = {
+                  "coordinates": json.dumps([[-121.394525, 44.158669]]),
+                  "area_reducer": "mean",
+                  "dataset": dataset,
+                  "variable": ", ".join(variables),
+                  "start_date": "2025-06-23",
+                  "end_date": "2025-06-25",
+              }
+              status, raw = request(
+                  "https://api.climateengine.org/timeseries/native/coordinates",
+                  method="POST",
+                  body=body,
+              )
+              print(f"TIMESERIES {dataset} HTTP {status}")
+              try:
+                  parsed = json.loads(raw)
+                  print(json.dumps(summarize(parsed), indent=2)[:10000])
+                  print("SAMPLE", json.dumps(parsed, default=str)[:5000])
+              except Exception:
+                  print(raw[:3000])
+          PY
