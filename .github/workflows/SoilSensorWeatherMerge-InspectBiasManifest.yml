@@ -1,0 +1,19 @@
+name: SoilSensorWeatherMerge-InspectBiasManifest
+
+on:
+  push:
+    paths:
+      - ".github/workflows/SoilSensorWeatherMerge-InspectBiasManifest.yml"
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read sanitized bias manifest
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.S3PRIVATE_AccessKey }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.S3PRIVATE_SecretKey }}
+          AWS_DEFAULT_REGION: us-east-1
+        run: |
+          aws s3 cp s3://faasr-bucket-smarttap-private/soil_sensor_processing/bias_correction/bias_correction_manifest.json - |
+          jq '{status, reference_source_order, reference_selection_rule, reference_attempts}'
