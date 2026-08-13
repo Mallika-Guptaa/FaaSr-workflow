@@ -1,6 +1,6 @@
 name: SoilSensorWeatherMerge-RegisterAndInvoke
 
-# Rerun reason: use any accessible full or partial bias-reference dataset.
+# Rerun reason: verify cached bias output flows into final processing without an API-key proxy.
 on:
   push:
     paths:
