@@ -5,7 +5,8 @@
         "sensor_csv_path": "data/sites_vwc_corrected.csv",
         "site_locations_path": "data/site_locations.json",
         "staging_prefix": "soil_sensor_processing/staging",
-        "comparison_plot_file": "01_load_soil_inputs_comparison.png"
+        "comparison_plot_file": "01_load_soil_inputs_comparison.png",
+        "site_artifacts_prefix": "soil_sensor_processing/sites"
       },
       "InvokeNext": [
         "DownloadMergeWeather"
@@ -23,7 +24,8 @@
         "agrimet_station": "BEWO",
         "request_timeout_seconds": 90,
         "gridmet_workers": 4,
-        "comparison_plot_file": "02_weather_download_comparison.png"
+        "comparison_plot_file": "02_weather_download_comparison.png",
+        "site_artifacts_prefix": "soil_sensor_processing/sites"
       },
       "InvokeNext": [
         "DetectSensorMalfunctions"
@@ -42,7 +44,8 @@
         "qc_manifest_file": "sensor_qc_manifest.json",
         "problem_layer_depth": 6,
         "site2_cutoff_date": "2025-07-15",
-        "comparison_plot_file": "03_sensor_malfunction_qc_comparison.png"
+        "comparison_plot_file": "03_sensor_malfunction_qc_comparison.png",
+        "site_artifacts_prefix": "soil_sensor_processing/sites"
       },
       "InvokeNext": [
         "CreateFinalMergedCSV"
@@ -62,7 +65,8 @@
         "gridmet_file": "gridmet_daily_by_site.csv",
         "final_file": "soil_moisture_weather_merged.csv",
         "final_manifest_file": "final_merge_manifest.json",
-        "comparison_plot_file": "04_weather_merge_comparison.png"
+        "comparison_plot_file": "04_weather_merge_comparison.png",
+        "site_artifacts_prefix": "soil_sensor_processing/sites"
       },
       "InvokeNext": [
         "DetectClassifyReconstructGaps"
@@ -86,7 +90,8 @@
         "gap_manifest_file": "gap_reconstruction_manifest.json",
         "short_gap_max_steps": 6,
         "expected_weekdays": "auto",
-        "comparison_plot_file": "05_gap_reconstruction_comparison.png"
+        "comparison_plot_file": "05_gap_reconstruction_comparison.png",
+        "site_artifacts_prefix": "soil_sensor_processing/sites"
       },
       "InvokeNext": [
         "DetectOutliers"
@@ -117,7 +122,8 @@
         "machine_learning_contamination": 0.01,
         "dbscan_distance_quantile": 0.99,
         "random_state": 42,
-        "comparison_plot_file": "06_outlier_detection_comparison.png"
+        "comparison_plot_file": "06_outlier_detection_comparison.png",
+        "site_artifacts_prefix": "soil_sensor_processing/sites"
       },
       "InvokeNext": [
         "DetectAndCorrectBias"
@@ -152,7 +158,8 @@
         "minimum_row_improvement": 0.005,
         "maximum_correction": 0.03,
         "comparison_plot_file": "07_bias_correction_comparison.png",
-        "minimum_reference_correlation": 0.6
+        "minimum_reference_correlation": 0.6,
+        "site_artifacts_prefix": "soil_sensor_processing/sites"
       },
       "InvokeNext": [
         "SmoothAndValidateFinalDataset"
@@ -183,7 +190,8 @@
         "rain_event_threshold": 1,
         "dry_threshold": 0.5,
         "physical_response_tolerance": 0.02,
-        "comparison_plot_file": "08_temporal_smoothing_comparison.png"
+        "comparison_plot_file": "08_temporal_smoothing_comparison.png",
+        "site_artifacts_prefix": "soil_sensor_processing/sites"
       },
       "InvokeNext": [],
       "FaaSServer": "GH",
