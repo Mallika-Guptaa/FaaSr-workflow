@@ -1,6 +1,6 @@
 name: SoilSensorWeatherMerge-RegisterAndInvoke
 
-# Rerun reason: verify Climate Engine key and fetch live bias references.
+# Rerun reason: validate confidence-gated bias correction and stage-to-stage plots.
 on:
   push:
     paths:
