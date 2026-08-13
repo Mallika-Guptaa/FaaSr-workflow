@@ -26,6 +26,11 @@ jobs:
           aws s3 cp s3://faasr-bucket-smarttap-private/soil_sensor_processing/bias_correction/07_bias_correction_comparison_site_1.png /tmp/site1-plots/
           aws s3 cp s3://faasr-bucket-smarttap-private/soil_sensor_processing/final/08_temporal_smoothing_comparison_site_1.png /tmp/site1-plots/
 
+          echo "GLOBAL BIAS SUMMARY"
+          aws s3 cp s3://faasr-bucket-smarttap-private/soil_sensor_processing/bias_correction/bias_correction_manifest.json - | jq '{systematically_biased_sensor_series, systematic_correction_eligible_sensor_series, systematic_correction_blocked_low_temporal_agreement, extreme_outlier_reference_disagreements, corrected_rows, corrected_outlier_rows, correction_counts_by_method, parameters}'
+          echo "GLOBAL FINAL SUMMARY"
+          aws s3 cp s3://faasr-bucket-smarttap-private/soil_sensor_processing/final/final_processing_manifest.json - | jq '{input_source, output_rows, missing_final_values, final_values_outside_0_1, maximum_absolute_smoothing_adjustment_cm3_cm3, held_out_validation_metrics, physical_consistency}'
+
           python3 - <<'PY'
           import csv
           import json
