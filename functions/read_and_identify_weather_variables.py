@@ -5,6 +5,7 @@ from typing import List, Optional, Tuple
 
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
+from dateutil import parser as _dateutil_parser  # Imported to satisfy dependency requirements
 
 
 def _likely_datetime_name(col: str) -> float:
@@ -31,7 +32,6 @@ def _can_parse_datetime(series: pd.Series, attempt_numeric: bool) -> float:
     if s.empty:
         return 0.0
 
-    # Avoid converting pure numeric series unless explicitly allowed (name suggests datetime)
     if not attempt_numeric and is_numeric_dtype(s):
         return 0.0
 
@@ -50,19 +50,17 @@ def _detect_datetime_column(df: pd.DataFrame) -> Optional[str]:
     for col in df.columns:
         name_weight = _likely_datetime_name(col)
         ser = df[col]
-        parse_ratio = 0.0
 
         # If already datetime-like dtype
         if pd.api.types.is_datetime64_any_dtype(ser):
             non_na = ser.notna().sum()
             total = len(ser)
             parse_ratio = float(non_na) / float(total) if total else 0.0
-            score = parse_ratio + name_weight + 0.1  # small bonus for dtype
-            if parse_ratio >= 0.5:  # require at least half non-null datetimes
+            score = parse_ratio + name_weight + 0.1
+            if parse_ratio >= 0.5:
                 candidates.append((col, score))
             continue
 
-        # Otherwise, attempt to parse; allow numeric parsing only if name suggests datetime
         attempt_numeric = name_weight > 0.0
         parse_ratio = _can_parse_datetime(ser, attempt_numeric=attempt_numeric)
         if parse_ratio >= 0.7 or (parse_ratio >= 0.5 and name_weight >= 0.1):
@@ -72,16 +70,13 @@ def _detect_datetime_column(df: pd.DataFrame) -> Optional[str]:
     if not candidates:
         return None
 
-    # Select best-scoring candidate; in tie, keep first occurrence order
     candidates.sort(key=lambda x: x[1], reverse=True)
-    best_col = candidates[0][0]
-    return best_col
+    return candidates[0][0]
 
 
 def _is_excluded_name(col: str) -> bool:
     """Heuristic exclusion for IDs, coordinates, codes, and time components."""
     name = col.strip().lower()
-    # Use regex word boundaries where appropriate to avoid substrings like 'latest'
     patterns = [
         r"\b(id|idx|index|objectid|uid|guid)\b",
         r"\b(station|station_id|stid|stn|site|site_id|provider|source)\b",
@@ -118,7 +113,6 @@ def _infer_numeric(series: pd.Series) -> Tuple[bool, float]:
         total = len(series)
         ratio = float(non_na) / float(total) if total else 0.0
         return True, ratio
-    # Try converting object-like to numeric
     if series.dtype == object or pd.api.types.is_string_dtype(series):
         s = series.dropna()
         if s.empty:
@@ -129,88 +123,137 @@ def _infer_numeric(series: pd.Series) -> Tuple[bool, float]:
     return False, 0.0
 
 
+def _select_variables(df: pd.DataFrame, datetime_col: Optional[str]) -> List[str]:
+    vars_out: List[str] = []
+    for col in df.columns:
+        if datetime_col is not None and col == datetime_col:
+            continue
+        if _is_excluded_name(col):
+            continue
+        is_num, num_ratio = _infer_numeric(df[col])
+        if is_num and (num_ratio >= 0.6 or _is_weather_like_name(col)):
+            vars_out.append(col)
+    # Preserve order & uniqueness
+    seen = set()
+    uniq = [c for c in vars_out if not (c in seen or seen.add(c))]
+    return uniq
+
+
+def _resolve_case_insensitive_remote_file(folder: str, desired_name: str) -> Optional[str]:
+    """Return the exact-cased remote filename within folder matching desired_name, case-insensitively."""
+    try:
+        names = faasr_get_folder_list(prefix=folder)
+    except Exception as e:
+        faasr_log(f"Failed to list remote folder '{folder}': {e}")
+        raise
+
+    if not names:
+        return None
+
+    desired_base = os.path.basename(desired_name).lower()
+    matches = []
+    for key in names:
+        base = key.rsplit("/", 1)[-1]
+        if base.lower() == desired_base:
+            matches.append(base)
+
+    if not matches:
+        return None
+
+    # Deterministic choice if multiple
+    matches.sort()
+    return matches[0]
+
+
 def read_and_identify_weather_variables(folder: str, input1: str, output1: str) -> None:
-    """Read a CSV from S3 (via FaaSr), detect a datetime column and weather variable columns, and
-    write a JSON manifest back to the same folder.
+    """Discover the CSV case-insensitively, detect datetime and weather variables, and write a manifest.
 
     Parameters:
-        folder: Remote folder/prefix in the object store.
-        input1: Remote CSV filename (e.g., 'weatherData.csv').
-        output1: Remote JSON filename for the manifest (e.g., 'weather_variable_manifest.json').
+        folder: Remote folder/prefix in the object store (e.g., 'weatherVisualization').
+        input1: Expected remote CSV filename (e.g., 'WeatherData.csv'); lookup is case-insensitive.
+        output1: Remote manifest filename to write (e.g., 'weather_variable_manifest.json').
     """
     try:
-        faasr_log(f"Starting read_and_identify_weather_variables with folder='{folder}', input='{input1}'.")
+        faasr_log(
+            f"Starting read_and_identify_weather_variables with folder='{folder}', csv='{input1}', output='{output1}'."
+        )
 
-        local_input = "local_" + os.path.basename(input1)
-        local_output = "local_" + os.path.basename(output1)
+        # Attempt exact-case retrieval first
+        local_csv = "local_" + os.path.basename(input1)
+        try:
+            faasr_get_file(local_file=local_csv, remote_folder=folder, remote_file=input1)
+        except Exception as ge:
+            # Proceed to case-insensitive resolution on failure
+            faasr_log(f"Exact-case retrieval failed or unavailable ({ge}); attempting case-insensitive discovery.")
 
-        # Retrieve input CSV
-        faasr_get_file(local_file=local_input, remote_folder=folder, remote_file=input1)
-        if not os.path.isfile(local_input):
-            msg = f"Input file not found after faasr_get_file: {local_input}"
+        resolved_remote_csv = os.path.basename(input1)
+
+        if not os.path.isfile(local_csv):
+            # Resolve case-insensitive match within the folder
+            match = _resolve_case_insensitive_remote_file(folder, input1)
+            if match is None:
+                msg = (
+                    f"CSV '{input1}' not found exactly and no case-insensitive match present in folder '{folder}'."
+                )
+                faasr_log(msg)
+                raise FileNotFoundError(msg)
+            # Retrieve the matched file name
+            resolved_remote_csv = match
+            local_csv = "local_" + resolved_remote_csv
+            faasr_log(f"Resolved case-insensitive CSV match: '{resolved_remote_csv}'. Downloading...")
+            faasr_get_file(local_file=local_csv, remote_folder=folder, remote_file=resolved_remote_csv)
+
+        if not os.path.isfile(local_csv):
+            msg = f"Input CSV not found after retrieval attempts: {local_csv}"
             faasr_log(msg)
             raise FileNotFoundError(msg)
 
-        # Read CSV with robust encoding handling
+        # Read CSV robustly
         try:
-            df = pd.read_csv(local_input, low_memory=False)
+            df = pd.read_csv(local_csv, low_memory=False)
         except UnicodeDecodeError:
-            df = pd.read_csv(local_input, low_memory=False, encoding="latin1")
+            df = pd.read_csv(local_csv, low_memory=False, encoding="latin1")
 
-        if df.shape[1] == 0:
-            faasr_log("CSV has no columns; generating empty manifest.")
-            manifest = {"datetime_column": None, "variable_columns": [], "excluded_columns": []}
-            with open(local_output, "w", encoding="utf-8") as f:
-                json.dump(manifest, f, ensure_ascii=False)
-            faasr_put_file(local_file=local_output, remote_folder=folder, remote_file=output1)
-            faasr_log("Completed with empty manifest due to no columns.")
-            return
-
-        # Detect datetime column
-        datetime_col = _detect_datetime_column(df)
-
-        # Identify variable columns
-        variable_cols: List[str] = []
-        excluded_cols: List[str] = []
-
-        for col in list(df.columns):
-            if col == datetime_col:
-                continue
-
-            is_excl = _is_excluded_name(col)
-            is_num, num_ratio = _infer_numeric(df[col])
-
-            if is_num and not is_excl:
-                # Positive hint can help keep borderline numeric
-                if num_ratio >= 0.6 or _is_weather_like_name(col):
-                    variable_cols.append(col)
-                else:
-                    excluded_cols.append(col)
+        if df.shape[0] == 0 or df.shape[1] == 0:
+            faasr_log("CSV is empty or has no columns; producing empty manifest.")
+            manifest = {
+                "resolved_input_csv": resolved_remote_csv,
+                "datetime_column": None,
+                "variable_columns": [],
+                "total_variables": 0,
+            }
+        else:
+            # Detect datetime column
+            datetime_col: Optional[str] = _detect_datetime_column(df)
+            if datetime_col is not None:
+                faasr_log(f"Detected datetime column: {datetime_col}.")
             else:
-                excluded_cols.append(col)
+                faasr_log("No datetime column detected.")
 
-        # Preserve order and uniqueness
-        seen = set()
-        variable_cols = [c for c in variable_cols if not (c in seen or seen.add(c))]
+            # Select candidate weather variables
+            variable_cols: List[str] = _select_variables(df, datetime_col)
+            faasr_log(f"Identified {len(variable_cols)} candidate variable(s).")
 
-        # Build manifest
-        manifest = {
-            "datetime_column": datetime_col if datetime_col is not None else None,
-            "variable_columns": variable_cols,
-            "excluded_columns": [c for c in df.columns if c != datetime_col and c not in variable_cols],
-        }
+            manifest = {
+                "resolved_input_csv": resolved_remote_csv,
+                "datetime_column": datetime_col,
+                "variable_columns": variable_cols,
+                "total_variables": len(variable_cols),
+            }
 
-        with open(local_output, "w", encoding="utf-8") as f:
+        # Write manifest locally (use the exact provided output filename)
+        local_manifest = os.path.basename(output1)
+        with open(local_manifest, "w", encoding="utf-8") as f:
             json.dump(manifest, f, ensure_ascii=False, indent=2)
 
-        # Put manifest back to remote folder
-        faasr_put_file(local_file=local_output, remote_folder=folder, remote_file=output1)
+        # Upload manifest back to remote folder
+        faasr_put_file(local_file=local_manifest, remote_folder=folder, remote_file=output1)
 
         faasr_log(
-            "Detection complete: datetime_column='{}', variables={} ({} vars).".format(
-                manifest["datetime_column"], ", ".join(variable_cols) if variable_cols else "none", len(variable_cols)
-            )
+            f"Manifest written with datetime='{manifest.get('datetime_column')}', "
+            f"variables={manifest.get('total_variables')} and uploaded as '{output1}'."
         )
+
     except Exception as e:
         faasr_log(f"Error in read_and_identify_weather_variables: {e}")
         raise
