@@ -11,8 +11,8 @@
       "Type": "Python",
       "FunctionName": "read_and_identify_weather_variables",
       "Arguments": {
-        "folder": "weatherVisualization",
-        "input1": "weatherData.csv",
+        "folder": "WeatherVisualization",
+        "input1": "WeatherData.csv",
         "output1": "weather_variable_manifest.json"
       },
       "InvokeNext": [
@@ -24,8 +24,8 @@
       "Type": "Python",
       "FunctionName": "create_weather_variable_plots",
       "Arguments": {
-        "folder": "weatherVisualization",
-        "input1": "weatherData.csv",
+        "folder": "WeatherVisualization",
+        "input1": "WeatherData.csv",
         "input2": "weather_variable_manifest.json",
         "output1": "plots_generation_done.txt"
       },
@@ -38,7 +38,7 @@
       "Type": "Python",
       "FunctionName": "write_weather_plot_manifest",
       "Arguments": {
-        "folder": "weatherVisualization",
+        "folder": "WeatherVisualization",
         "input1": "plots_generation_done.txt",
         "output1": "weather_plot_manifest.json"
       },
