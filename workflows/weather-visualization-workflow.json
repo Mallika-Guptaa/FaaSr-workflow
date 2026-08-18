@@ -1,0 +1,87 @@
+{
+  "FunctionInvoke": "read-and-identify-weather-variables",
+  "WorkflowName": "weather-visualization-workflow",
+  "DefaultDataStore": "S3",
+  "LoggingDataStore": "S3",
+  "FaaSrLog": "FaaSrLog",
+  "InvocationIDFromDate": "%Y-%m-%d-%H-%M-%S",
+  "ActionList": {
+    "read-and-identify-weather-variables": {
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "read_and_identify_weather_variables",
+      "Arguments": {
+        "folder": "weatherVisualization",
+        "input1": "weatherData.csv",
+        "output1": "weather_variable_manifest.json"
+      },
+      "InvokeNext": [
+        "create-weather-variable-plots"
+      ]
+    },
+    "create-weather-variable-plots": {
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "create_weather_variable_plots",
+      "Arguments": {
+        "folder": "weatherVisualization",
+        "input1": "weatherData.csv",
+        "input2": "weather_variable_manifest.json",
+        "output1": "plots_generation_done.txt"
+      },
+      "InvokeNext": [
+        "write-weather-plot-manifest"
+      ]
+    },
+    "write-weather-plot-manifest": {
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "write_weather_plot_manifest",
+      "Arguments": {
+        "folder": "weatherVisualization",
+        "input1": "plots_generation_done.txt",
+        "output1": "weather_plot_manifest.json"
+      },
+      "InvokeNext": []
+    }
+  },
+  "ActionContainers": {
+    "read-and-identify-weather-variables": "ghcr.io/faasr/github-actions-python:latest",
+    "create-weather-variable-plots": "ghcr.io/faasr/github-actions-python:latest",
+    "write-weather-plot-manifest": "ghcr.io/faasr/github-actions-python:latest"
+  },
+  "ComputeServers": {
+    "GH": {
+      "FaaSType": "GitHubActions",
+      "UserName": "Mallika-Guptaa",
+      "ActionRepoName": "FaaSr-workflow",
+      "Branch": "main",
+      "UseSecretStore": true
+    }
+  },
+  "DataStores": {
+    "S3": {
+      "Endpoint": "https://s3.amazonaws.com",
+      "Bucket": "faasr-bucket-smarttap-private",
+      "Region": "us-east-1",
+      "AccessKey": "S3_AccessKey",
+      "SecretKey": "S3_SecretKey",
+      "Writable": "TRUE"
+    }
+  },
+  "FunctionGitRepo": {
+    "read_and_identify_weather_variables": "Mallika-Guptaa/FaaSr-workflow/main/functions/read_and_identify_weather_variables.py",
+    "create_weather_variable_plots": "Mallika-Guptaa/FaaSr-workflow/main/functions/create_weather_variable_plots.py",
+    "write_weather_plot_manifest": "Mallika-Guptaa/FaaSr-workflow/main/functions/write_weather_plot_manifest.py"
+  },
+  "PyPIPackageDownloads": {
+    "read_and_identify_weather_variables": [
+      "pandas",
+      "python-dateutil"
+    ],
+    "create_weather_variable_plots": [
+      "pandas",
+      "matplotlib"
+    ]
+  }
+}
