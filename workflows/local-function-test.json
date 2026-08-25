@@ -1,0 +1,45 @@
+{
+  "FunctionInvoke": "calculate-number-summary",
+  "WorkflowName": "local-function-test",
+  "DefaultDataStore": "S3",
+  "LoggingDataStore": "S3",
+  "FaaSrLog": "FaaSrLog",
+  "InvocationIDFromDate": "%Y-%m-%d-%H-%M-%S",
+  "ActionList": {
+    "calculate-number-summary": {
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "calculate_number_summary",
+      "Arguments": {
+        "folder": "workflow_data",
+        "output1": "number_summary.json"
+      },
+      "InvokeNext": []
+    }
+  },
+  "ActionContainers": {
+    "calculate-number-summary": "ghcr.io/faasr/github-actions-python:latest"
+  },
+  "ComputeServers": {
+    "GH": {
+      "FaaSType": "GitHubActions",
+      "UserName": "Mallika-Guptaa",
+      "ActionRepoName": "FaaSr-workflow",
+      "Branch": "main",
+      "UseSecretStore": true
+    }
+  },
+  "DataStores": {
+    "S3": {
+      "Endpoint": "https://s3.amazonaws.com",
+      "Bucket": "faasr-bucket-smarttap-private",
+      "Region": "us-east-1",
+      "AccessKey": "S3_AccessKey",
+      "SecretKey": "S3_SecretKey",
+      "Writable": "TRUE"
+    }
+  },
+  "FunctionGitRepo": {
+    "calculate_number_summary": "Mallika-Guptaa/FaaSr-workflow/main/functions/calculate_number_summary.py"
+  }
+}
