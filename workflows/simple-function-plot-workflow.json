@@ -1,0 +1,65 @@
+{
+  "FunctionInvoke": "generate-function-points",
+  "WorkflowName": "simple-function-plot-workflow",
+  "DefaultDataStore": "S3",
+  "LoggingDataStore": "S3",
+  "FaaSrLog": "FaaSrLog",
+  "InvocationIDFromDate": "%Y-%m-%d-%H-%M-%S",
+  "ActionList": {
+    "generate-function-points": {
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "generate_function_points",
+      "Arguments": {
+        "folder": "SimpleFunctionPlot",
+        "output1": "function_points.csv"
+      },
+      "InvokeNext": [
+        "plot-function-line"
+      ]
+    },
+    "plot-function-line": {
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "plot_function_line",
+      "Arguments": {
+        "folder": "SimpleFunctionPlot",
+        "input1": "function_points.csv",
+        "output1": "function_line_plot.png"
+      },
+      "InvokeNext": []
+    }
+  },
+  "ActionContainers": {
+    "generate-function-points": "ghcr.io/faasr/github-actions-python:latest",
+    "plot-function-line": "ghcr.io/faasr/github-actions-python:latest"
+  },
+  "ComputeServers": {
+    "GH": {
+      "FaaSType": "GitHubActions",
+      "UserName": "Mallika-Guptaa",
+      "ActionRepoName": "FaaSr-workflow",
+      "Branch": "main",
+      "UseSecretStore": true
+    }
+  },
+  "DataStores": {
+    "S3": {
+      "Endpoint": "https://s3.amazonaws.com",
+      "Bucket": "faasr-bucket-smarttap-private",
+      "Region": "us-east-1",
+      "AccessKey": "S3_AccessKey",
+      "SecretKey": "S3_SecretKey",
+      "Writable": "TRUE"
+    }
+  },
+  "FunctionGitRepo": {
+    "generate_function_points": "Mallika-Guptaa/FaaSr-workflow/main/functions/generate_function_points.py",
+    "plot_function_line": "Mallika-Guptaa/FaaSr-workflow/main/functions/plot_function_line.py"
+  },
+  "PyPIPackageDownloads": {
+    "plot_function_line": [
+      "matplotlib"
+    ]
+  }
+}
