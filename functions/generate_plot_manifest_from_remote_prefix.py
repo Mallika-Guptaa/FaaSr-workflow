@@ -1,5 +1,9 @@
 """Generate plot manifest from remote prefix."""
 
+import json
+import tempfile
+import os
+
 
 def generate_plot_manifest_from_remote_prefix(folder: str, input1: str, output1: str) -> None:
     """Enumerate PNG files in a folder and create a JSON manifest.
@@ -30,20 +34,17 @@ def generate_plot_manifest_from_remote_prefix(folder: str, input1: str, output1:
     }
 
     # Serialize to JSON string for upload
-    import json
-    manifest_string = json.dumps(manifest)
+    manifest_json = json.dumps(manifest)
 
     # Write to local temp file
-    import tempfile
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-        f.write(manifest_string)
+        f.write(manifest_json)
         local_manifest_file = f.name
 
     # Upload the manifest to S3
     faasr_put_file(local_file=local_manifest_file, remote_folder=folder, remote_file=output1)
 
     # Clean up temp file
-    import os
     os.remove(local_manifest_file)
 
     faasr_log("Plot manifest generated and uploaded successfully")
