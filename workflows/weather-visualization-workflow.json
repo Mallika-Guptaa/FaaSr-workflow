@@ -11,7 +11,7 @@
       "Type": "Python",
       "FunctionName": "inspect_csv_and_create_variable_manifest",
       "Arguments": {
-        "folder": "WeatherVisualization/OpenCodeTest",
+        "folder": "WeatherVisualization",
         "input1": "WeatherData.csv",
         "output1": "weather_variable_manifest.json"
       },
@@ -24,7 +24,7 @@
       "Type": "Python",
       "FunctionName": "plot_numeric_variables_to_png",
       "Arguments": {
-        "folder": "WeatherVisualization/OpenCodeTest",
+        "folder": "WeatherVisualization",
         "input1": "WeatherData.csv",
         "output1": "plots_generation_complete.json"
       },
@@ -37,7 +37,7 @@
       "Type": "Python",
       "FunctionName": "generate_plot_manifest_from_remote_prefix",
       "Arguments": {
-        "folder": "WeatherVisualization/OpenCodeTest",
+        "folder": "WeatherVisualization",
         "input1": "plots_generation_complete.json",
         "output1": "weather_plot_manifest.json"
       },
