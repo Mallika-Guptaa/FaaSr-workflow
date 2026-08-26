@@ -1,26 +1,225 @@
 {
   "ActionList": {
-    "ReadZentraRawFiles": {
+    "StartParallelRawBuild": {
       "Arguments": {
         "raw_prefix": "zentra_raw_backfill",
-        "staging_prefix": "zentra_phase2_staging_manifest_v2_full",
-        "max_files_per_serial": "ALL",
+        "staging_prefix": "zentra_phase2_staging_manifest_v2_full_parallel",
         "output_prefix": "zentra_final_12_configs",
         "rebuild_mode": "full",
         "manifest_prefix": "zentra_processing_state",
         "manifest_file": "processed_raw_manifest.json"
       },
       "InvokeNext": [
+        "BuildRawz619600",
+        "BuildRawz612196",
+        "BuildRawz619602",
+        "BuildRawz619604",
+        "BuildRawz619597",
+        "BuildRawz619594",
+        "BuildRawz619599",
+        "BuildRawz612197",
+        "BuildRawz619595",
+        "BuildRawz619598",
+        "BuildRawz612202",
+        "BuildRawz619596",
+        "BuildRawz619603",
+        "WaitForRawBySerial"
+      ],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "initialize_parallel_raw_build"
+    },
+    "BuildRawz619600": {
+      "Arguments": {
+        "serial_number": "z6-19600",
+        "raw_prefix": "zentra_raw_backfill",
+        "staging_prefix": "zentra_phase2_staging_manifest_v2_full_parallel",
+        "max_files_per_serial": "ALL",
+        "fail_on_unreadable": true
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "build_raw_by_serial"
+    },
+    "BuildRawz612196": {
+      "Arguments": {
+        "serial_number": "z6-12196",
+        "raw_prefix": "zentra_raw_backfill",
+        "staging_prefix": "zentra_phase2_staging_manifest_v2_full_parallel",
+        "max_files_per_serial": "ALL",
+        "fail_on_unreadable": true
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "build_raw_by_serial"
+    },
+    "BuildRawz619602": {
+      "Arguments": {
+        "serial_number": "z6-19602",
+        "raw_prefix": "zentra_raw_backfill",
+        "staging_prefix": "zentra_phase2_staging_manifest_v2_full_parallel",
+        "max_files_per_serial": "ALL",
+        "fail_on_unreadable": true
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "build_raw_by_serial"
+    },
+    "BuildRawz619604": {
+      "Arguments": {
+        "serial_number": "z6-19604",
+        "raw_prefix": "zentra_raw_backfill",
+        "staging_prefix": "zentra_phase2_staging_manifest_v2_full_parallel",
+        "max_files_per_serial": "ALL",
+        "fail_on_unreadable": true
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "build_raw_by_serial"
+    },
+    "BuildRawz619597": {
+      "Arguments": {
+        "serial_number": "z6-19597",
+        "raw_prefix": "zentra_raw_backfill",
+        "staging_prefix": "zentra_phase2_staging_manifest_v2_full_parallel",
+        "max_files_per_serial": "ALL",
+        "fail_on_unreadable": true
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "build_raw_by_serial"
+    },
+    "BuildRawz619594": {
+      "Arguments": {
+        "serial_number": "z6-19594",
+        "raw_prefix": "zentra_raw_backfill",
+        "staging_prefix": "zentra_phase2_staging_manifest_v2_full_parallel",
+        "max_files_per_serial": "ALL",
+        "fail_on_unreadable": true
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "build_raw_by_serial"
+    },
+    "BuildRawz619599": {
+      "Arguments": {
+        "serial_number": "z6-19599",
+        "raw_prefix": "zentra_raw_backfill",
+        "staging_prefix": "zentra_phase2_staging_manifest_v2_full_parallel",
+        "max_files_per_serial": "ALL",
+        "fail_on_unreadable": true
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "build_raw_by_serial"
+    },
+    "BuildRawz612197": {
+      "Arguments": {
+        "serial_number": "z6-12197",
+        "raw_prefix": "zentra_raw_backfill",
+        "staging_prefix": "zentra_phase2_staging_manifest_v2_full_parallel",
+        "max_files_per_serial": "ALL",
+        "fail_on_unreadable": true
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "build_raw_by_serial"
+    },
+    "BuildRawz619595": {
+      "Arguments": {
+        "serial_number": "z6-19595",
+        "raw_prefix": "zentra_raw_backfill",
+        "staging_prefix": "zentra_phase2_staging_manifest_v2_full_parallel",
+        "max_files_per_serial": "ALL",
+        "fail_on_unreadable": true
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "build_raw_by_serial"
+    },
+    "BuildRawz619598": {
+      "Arguments": {
+        "serial_number": "z6-19598",
+        "raw_prefix": "zentra_raw_backfill",
+        "staging_prefix": "zentra_phase2_staging_manifest_v2_full_parallel",
+        "max_files_per_serial": "ALL",
+        "fail_on_unreadable": true
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "build_raw_by_serial"
+    },
+    "BuildRawz612202": {
+      "Arguments": {
+        "serial_number": "z6-12202",
+        "raw_prefix": "zentra_raw_backfill",
+        "staging_prefix": "zentra_phase2_staging_manifest_v2_full_parallel",
+        "max_files_per_serial": "ALL",
+        "fail_on_unreadable": true
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "build_raw_by_serial"
+    },
+    "BuildRawz619596": {
+      "Arguments": {
+        "serial_number": "z6-19596",
+        "raw_prefix": "zentra_raw_backfill",
+        "staging_prefix": "zentra_phase2_staging_manifest_v2_full_parallel",
+        "max_files_per_serial": "ALL",
+        "fail_on_unreadable": true
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "build_raw_by_serial"
+    },
+    "BuildRawz619603": {
+      "Arguments": {
+        "serial_number": "z6-19603",
+        "raw_prefix": "zentra_raw_backfill",
+        "staging_prefix": "zentra_phase2_staging_manifest_v2_full_parallel",
+        "max_files_per_serial": "ALL",
+        "fail_on_unreadable": true
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "build_raw_by_serial"
+    },
+    "WaitForRawBySerial": {
+      "Arguments": {
+        "staging_prefix": "zentra_phase2_staging_manifest_v2_full_parallel",
+        "raw_prefix": "zentra_raw_backfill",
+        "output_prefix": "zentra_final_12_configs",
+        "manifest_prefix": "zentra_processing_state",
+        "manifest_file": "processed_raw_manifest.json",
+        "expected_serials": "ALL",
+        "poll_seconds": 30,
+        "timeout_seconds": 14400
+      },
+      "InvokeNext": [
         "Form12ConfigCSVs"
       ],
       "FaaSServer": "GH",
       "Type": "Python",
-      "FunctionName": "read_zentra_raw_files"
+      "FunctionName": "wait_for_raw_by_serial"
     },
     "Form12ConfigCSVs": {
       "Arguments": {
-        "staging_prefix": "zentra_phase2_staging_manifest_v2_full",
-        "generated_prefix": "zentra_phase2_staging_manifest_v2_full/generated_12_configs"
+        "staging_prefix": "zentra_phase2_staging_manifest_v2_full_parallel",
+        "generated_prefix": "zentra_phase2_staging_manifest_v2_full_parallel/generated_12_configs"
       },
       "InvokeNext": [
         "Upload12ConfigCSVs"
@@ -31,9 +230,9 @@
     },
     "Upload12ConfigCSVs": {
       "Arguments": {
-        "generated_prefix": "zentra_phase2_staging_manifest_v2_full/generated_12_configs",
+        "generated_prefix": "zentra_phase2_staging_manifest_v2_full_parallel/generated_12_configs",
         "output_prefix": "zentra_final_12_configs",
-        "staging_prefix": "zentra_phase2_staging_manifest_v2_full",
+        "staging_prefix": "zentra_phase2_staging_manifest_v2_full_parallel",
         "upload_mode": "overwrite",
         "manifest_prefix": "zentra_processing_state",
         "manifest_file": "processed_raw_manifest.json"
@@ -61,19 +260,41 @@
     }
   },
   "ActionContainers": {
-    "ReadZentraRawFiles": "ghcr.io/faasr/github-actions-python:latest",
+    "StartParallelRawBuild": "ghcr.io/faasr/github-actions-python:latest",
+    "BuildRawz619600": "ghcr.io/faasr/github-actions-python:latest",
+    "BuildRawz612196": "ghcr.io/faasr/github-actions-python:latest",
+    "BuildRawz619602": "ghcr.io/faasr/github-actions-python:latest",
+    "BuildRawz619604": "ghcr.io/faasr/github-actions-python:latest",
+    "BuildRawz619597": "ghcr.io/faasr/github-actions-python:latest",
+    "BuildRawz619594": "ghcr.io/faasr/github-actions-python:latest",
+    "BuildRawz619599": "ghcr.io/faasr/github-actions-python:latest",
+    "BuildRawz612197": "ghcr.io/faasr/github-actions-python:latest",
+    "BuildRawz619595": "ghcr.io/faasr/github-actions-python:latest",
+    "BuildRawz619598": "ghcr.io/faasr/github-actions-python:latest",
+    "BuildRawz612202": "ghcr.io/faasr/github-actions-python:latest",
+    "BuildRawz619596": "ghcr.io/faasr/github-actions-python:latest",
+    "BuildRawz619603": "ghcr.io/faasr/github-actions-python:latest",
+    "WaitForRawBySerial": "ghcr.io/faasr/github-actions-python:latest",
     "Form12ConfigCSVs": "ghcr.io/faasr/github-actions-python:latest",
     "Upload12ConfigCSVs": "ghcr.io/faasr/github-actions-python:latest"
   },
-  "FunctionInvoke": "ReadZentraRawFiles",
+  "FunctionInvoke": "StartParallelRawBuild",
   "DefaultDataStore": "S3PRIVATE",
   "FunctionGitRepo": {
-    "read_zentra_raw_files": "Mallika-Guptaa/zentra_backfill_workflow_files/python",
+    "initialize_parallel_raw_build": "Mallika-Guptaa/zentra_backfill_workflow_files/python",
+    "build_raw_by_serial": "Mallika-Guptaa/zentra_backfill_workflow_files/python",
+    "wait_for_raw_by_serial": "Mallika-Guptaa/zentra_backfill_workflow_files/python",
     "form_12_config_csvs": "Mallika-Guptaa/zentra_backfill_workflow_files/python",
     "upload_12_config_csvs": "Mallika-Guptaa/zentra_backfill_workflow_files/python"
   },
   "PyPIPackageDownloads": {
-    "read_zentra_raw_files": [
+    "initialize_parallel_raw_build": [
+      "pandas"
+    ],
+    "build_raw_by_serial": [
+      "pandas"
+    ],
+    "wait_for_raw_by_serial": [
       "pandas"
     ],
     "form_12_config_csvs": [
@@ -86,5 +307,5 @@
   "Secrets": [],
   "FaaSrLog": "FaaSrLog",
   "LoggingDataStore": "S3PRIVATE",
-  "WorkflowName": "ZentraBuild12ConfigsManifestV2FullRebuild"
+  "WorkflowName": "ZentraBuild12ConfigsParallelRawBySerialFullRebuild"
 }
