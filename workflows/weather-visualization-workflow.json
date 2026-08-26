@@ -1,54 +1,53 @@
 {
-  "FunctionInvoke": "read-and-identify-weather-variables",
+  "FunctionInvoke": "inspect-csv-and-create-variable-manifest",
   "WorkflowName": "weather-visualization-workflow",
   "DefaultDataStore": "S3",
   "LoggingDataStore": "S3",
   "FaaSrLog": "FaaSrLog",
   "InvocationIDFromDate": "%Y-%m-%d-%H-%M-%S",
   "ActionList": {
-    "read-and-identify-weather-variables": {
+    "inspect-csv-and-create-variable-manifest": {
       "FaaSServer": "GH",
       "Type": "Python",
-      "FunctionName": "read_and_identify_weather_variables",
+      "FunctionName": "inspect_csv_and_create_variable_manifest",
       "Arguments": {
-        "folder": "WeatherVisualization",
+        "folder": "WeatherVisualization/OpenCodeTest",
         "input1": "WeatherData.csv",
         "output1": "weather_variable_manifest.json"
       },
       "InvokeNext": [
-        "create-weather-variable-plots"
+        "plot-numeric-variables-to-png"
       ]
     },
-    "create-weather-variable-plots": {
+    "plot-numeric-variables-to-png": {
       "FaaSServer": "GH",
       "Type": "Python",
-      "FunctionName": "create_weather_variable_plots",
+      "FunctionName": "plot_numeric_variables_to_png",
       "Arguments": {
-        "folder": "WeatherVisualization",
+        "folder": "WeatherVisualization/OpenCodeTest",
         "input1": "WeatherData.csv",
-        "input2": "weather_variable_manifest.json",
-        "output1": "plots_generation_done.txt"
+        "output1": "plots_generation_complete.json"
       },
       "InvokeNext": [
-        "write-weather-plot-manifest"
+        "generate-plot-manifest-from-remote-prefix"
       ]
     },
-    "write-weather-plot-manifest": {
+    "generate-plot-manifest-from-remote-prefix": {
       "FaaSServer": "GH",
       "Type": "Python",
-      "FunctionName": "write_weather_plot_manifest",
+      "FunctionName": "generate_plot_manifest_from_remote_prefix",
       "Arguments": {
-        "folder": "WeatherVisualization",
-        "input1": "plots_generation_done.txt",
+        "folder": "WeatherVisualization/OpenCodeTest",
+        "input1": "plots_generation_complete.json",
         "output1": "weather_plot_manifest.json"
       },
       "InvokeNext": []
     }
   },
   "ActionContainers": {
-    "read-and-identify-weather-variables": "ghcr.io/faasr/github-actions-python:latest",
-    "create-weather-variable-plots": "ghcr.io/faasr/github-actions-python:latest",
-    "write-weather-plot-manifest": "ghcr.io/faasr/github-actions-python:latest"
+    "inspect-csv-and-create-variable-manifest": "ghcr.io/faasr/github-actions-python:latest",
+    "plot-numeric-variables-to-png": "ghcr.io/faasr/github-actions-python:latest",
+    "generate-plot-manifest-from-remote-prefix": "ghcr.io/faasr/github-actions-python:latest"
   },
   "ComputeServers": {
     "GH": {
@@ -70,16 +69,15 @@
     }
   },
   "FunctionGitRepo": {
-    "read_and_identify_weather_variables": "Mallika-Guptaa/FaaSr-workflow/main/functions/read_and_identify_weather_variables.py",
-    "create_weather_variable_plots": "Mallika-Guptaa/FaaSr-workflow/main/functions/create_weather_variable_plots.py",
-    "write_weather_plot_manifest": "Mallika-Guptaa/FaaSr-workflow/main/functions/write_weather_plot_manifest.py"
+    "inspect_csv_and_create_variable_manifest": "Mallika-Guptaa/FaaSr-workflow/main/functions/inspect_csv_and_create_variable_manifest.py",
+    "plot_numeric_variables_to_png": "Mallika-Guptaa/FaaSr-workflow/main/functions/plot_numeric_variables_to_png.py",
+    "generate_plot_manifest_from_remote_prefix": "Mallika-Guptaa/FaaSr-workflow/main/functions/generate_plot_manifest_from_remote_prefix.py"
   },
   "PyPIPackageDownloads": {
-    "read_and_identify_weather_variables": [
-      "pandas",
-      "python-dateutil"
+    "inspect_csv_and_create_variable_manifest": [
+      "pandas>=2.0.0"
     ],
-    "create_weather_variable_plots": [
+    "plot_numeric_variables_to_png": [
       "pandas",
       "matplotlib"
     ]
