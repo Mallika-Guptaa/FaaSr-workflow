@@ -11,18 +11,13 @@ def sanitize_name(name):
     return name.lower().replace(" ", "_").replace("/", "_").replace("-", "_")
 
 
-# Download input CSV from S3
+# Global variables set by caller in stubs/execution
 csv_remote_folder = "WeatherVisualization"
 csv_remote_file = "WeatherData.csv"
 local_csv = "input_WeatherData.csv"
 output_folder = "WeatherVisualization/OpenCodeTest"
 plots_dir = "plots"
 
-# Install required dependencies (this is a fallback for headless environment)
-try:
-    __import__('pkg_resources').workfinder.run(['pandas', 'matplotlib'])
-except Exception:
-    pass  # Dependencies may already be available in the runtime environment
 
 def plot_numeric_variables_to_png(folder: str, input1: str, output1: str) -> None:
     """Download CSV, detect date column, plot numeric variables as line charts.
@@ -33,15 +28,14 @@ def plot_numeric_variables_to_png(folder: str, input1: str, output1: str) -> Non
         output1: The sentinel JSON output filename.
     """
     # Download CSV from S3
-    faasr_get_file(local_file=local_csv, remote_folder=folder, remote_file=csv_remote_file)
+    faasr_get_file(local_file=local_csv, remote_folder=folder, remote_file=input1)
     
     try:
         data = pd.read_csv(local_csv)  # Read local file (faasr_get_file will set this)
     except FileNotFoundError:
-        # This should not happen in testing; faasr_get_file ensures the file exists
         raise RuntimeError(f"Input CSV {input1} not found")
 
-    # Detect date column
+    # Detect date column (if any)
     date_col_lower = "date".lower()
     
     # Try 'date' column first (case-insensitive)
@@ -49,117 +43,76 @@ def plot_numeric_variables_to_png(folder: str, input1: str, output1: str) -> Non
         date_idx = next(i for i, col in enumerate(data.columns) if col.lower() == date_col_lower)
         date_column = data.iloc[:, date_idx]
     else:
-        # Find first column that parses as datetime for majority of rows
+        # No date column found - will use row index as x-axis
         date_column = None
-        most_rows_parsed = 0
-        
-        for idx, col in enumerate(data.columns):
-            try:
-                pd.to_datetime(data[col])
-                count = (pd.isna(pd.to_datetime(data[col])) == False).sum()
-                if count >= len(data) * 0.5 and count > most_rows_parsed:
-                    most_rows_parsed = count
-                    date_column = data.iloc[:, idx]
-            except Exception:
-                continue
-        
-        if date_column is None or most_rows_parsed < len(data) * 0.5:
-            # No valid date column found; use row index (0..N-1)
-            date_column = pd.Series(range(len(data)))
 
-    # Identify numeric columns (exclude date column)
+    # Identify numeric columns (exclude date column if present)
     numeric_cols = []
-    date_idx = -1
     for i, col in enumerate(data.columns):
-        if date_column is not None and col == data.iloc[:, date_idx].name:
-            continue
+        is_date = date_column is not None and col == data.iloc[:, i].name
         try:
             pd.to_numeric(data[col], errors="ignore")
-            if pd.notna(pd.to_numeric(data[col])).sum() > 0:
+            non_nan_count = ~pd.isna(pd.to_numeric(data[col])).sum()
+            if non_nan_count > 0 and not is_date:
                 numeric_cols.append(col)
         except Exception:
             pass
 
-    # Drop rows with NaN in date or any numeric column (for plotting)
-    mask_date = ~pd.isna(date_column)
-    
-    for col in numeric_cols:
-        # Create clean data excluding NaN values
-        if date_column is not None:
-            combined_mask = mask_date & (~pd.isna(data[col]))
-        else:
-            cleaned_data = data.dropna(subset=[col])
-            df_clean = cleaned_data.copy()
-            plt.figure(figsize=(10, 6))
-            plt.plot(range(len(df_clean)), df_clean[col], marker='o', linestyle='-')
-            
-            x_label = "Index" if date_column is None else "Date"
-            y_label = data[col].iloc[0] if len(data) > 0 else col
-            
-            plt.xlabel(x_label)
-            plt.ylabel(f"{col} Values")
-            plt.title(f'{col} Overview')
-            
-            plt.grid(True, linestyle='--', alpha=0.3)
-            
-            # Save as PNG with sanitized column name (spaces/unsafe chars -> underscores)
-            plot_local_file = f"plots/{sanitize_name(col)}.png"
-            fig.savefig(plot_local_file)
-            plt.close()
-    else:
+    if len(numeric_cols) == 0:
         raise RuntimeError("No numeric columns found for plotting")
 
-    # Create sentinel JSON with plot metadata
-    plots_info = []
-    
-    if date_column is not None and len(date_column) > 0:
-        for col in numeric_cols:
-            cleaned_data = data.dropna(subset=[col])
-            df_clean = cleaned_data.copy()
-            
-            sanitized = sanitize_name(col)
-            plots_info.append({
-                "filename": f"{sanitized}.png",
-                "variable": col,
-                "date_axis_available": True
-            })
+    # Determine X-axis variable name for labels
+    x_label = "Index" if date_column is None else date_column.name
 
-            # Save plot and upload
-            plot_local_file = f"plots/{sanitize_name(col)}.png"
-            
-            fig = plt.figure(figsize=(10, 6))
-            plt.plot(range(len(df_clean)), df_clean[col], marker='o', linestyle='-')
-            x_label = "Index" if date_column is None else "Date"
-            y_label = data[col].iloc[0] if len(data) > 0 else col
-            
-            plt.xlabel(x_label)
-            plt.ylabel(f"{col} Values")
-            plt.title(f'{col} Overview')
-            plt.grid(True, linestyle='--', alpha=0.3)
-            
-            # Save and upload PNG
-            plt.savefig(plot_local_file)
-            plt.close()
-            
-        else:
-            raise RuntimeError("No numeric columns found for plotting")
+    # Drop rows with NaN in any numeric column (for all plots)
+    drop_cols = []
+    for col in data.columns:
+        try:
+            pd.to_numeric(data[col], errors="ignore")
+            non_nan_count = ~pd.isna(pd.to_numeric(data[col])).sum()
+            if non_nan_count > 0 and col not in numeric_cols:
+                # This column is numeric but doesn't have NaN values, skip it
+                pass
+            else:
+                drop_cols.append(col)
+        except Exception:
+            pass
+
+    clean_data = data.dropna(subset=drop_cols)
+
+    # Create plot for each numeric column
+    fig = plt.figure(figsize=(10, 6))
+
+    for col in numeric_cols:
+        cleaned_data = clean_data.copy()
+        
+        fig = plt.figure(figsize=(10, 6))
+        plt.plot(range(len(cleaned_data)), cleaned_data[col], marker='o', linestyle='-')
+        
+        plt.xlabel(x_label)
+        plt.ylabel(f"{col} Values")
+        plt.title(f'{col} Overview')
+        
+        plt.grid(True, linestyle='--', alpha=0.3)
+        
+        # Save as PNG with sanitized column name (spaces/unsafe chars -> underscores)
+        plot_local_file = f"plots/{sanitize_name(col)}.png"
+        fig.savefig(plot_local_file)
+        plt.close()
+
+    faasr_log("Plot generation complete")
 
     manifest = {
-        "plot_count": len(plots_info),
-        "plots": plots_info,
+        "plot_count": len(numeric_cols),
+        "plots": [],
         "generated_at": pd.Timestamp.now().isoformat()
     }
 
-    # Ensure output folders exist
     os.makedirs(output_folder, exist_ok=True)
     
-    # Write JSON manifest to local file and upload to S3
-    json_local = f"{output_folder.rstrip('/')}{output1}"
+    json_path = f"{output_folder}/plots_generation_complete.json"
     
-    with open(json_local, 'w') as f:
+    with open(json_path, 'w') as f:
         json.dump(manifest, f, indent=2)
     
-    faasr_put_file(local_file=json_local, remote_folder=output_folder.rsplit("/", 1)[-1], remote_file=output1)
-    
-    # Log completion
-    faasr_log("Plot generation and upload complete")
+    faasr_put_file(local_file=json_path, remote_folder="WeatherVisualization", remote_file=output1)
