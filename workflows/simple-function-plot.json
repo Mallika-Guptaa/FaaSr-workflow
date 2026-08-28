@@ -1,0 +1,69 @@
+{
+  "FunctionInvoke": "generate-points",
+  "WorkflowName": "simple-function-plot",
+  "DefaultDataStore": "S3",
+  "LoggingDataStore": "S3",
+  "FaaSrLog": "FaaSrLog",
+  "InvocationIDFromDate": "%Y-%m-%d-%H-%M-%S",
+  "ActionList": {
+    "generate-points": {
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "generate_points",
+      "Arguments": {
+        "folder": "SimpleFunctionPlot",
+        "output1": "claude_points.csv"
+      },
+      "InvokeNext": [
+        "plot-points"
+      ]
+    },
+    "plot-points": {
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "plot_points",
+      "Arguments": {
+        "folder": "SimpleFunctionPlot",
+        "input1": "claude_points.csv",
+        "output1": "claude_plot.png"
+      },
+      "InvokeNext": []
+    }
+  },
+  "ActionContainers": {
+    "generate-points": "ghcr.io/faasr/github-actions-python:latest",
+    "plot-points": "ghcr.io/faasr/github-actions-python:latest"
+  },
+  "ComputeServers": {
+    "GH": {
+      "FaaSType": "GitHubActions",
+      "UserName": "Mallika-Guptaa",
+      "ActionRepoName": "FaaSr-workflow",
+      "Branch": "main",
+      "UseSecretStore": true
+    }
+  },
+  "DataStores": {
+    "S3": {
+      "Endpoint": "https://s3.amazonaws.com",
+      "Bucket": "faasr-bucket-smarttap-private",
+      "Region": "us-east-1",
+      "AccessKey": "S3_AccessKey",
+      "SecretKey": "S3_SecretKey",
+      "Writable": "TRUE"
+    }
+  },
+  "FunctionGitRepo": {
+    "generate_points": "Mallika-Guptaa/FaaSr-workflow/main/functions/generate_points.py",
+    "plot_points": "Mallika-Guptaa/FaaSr-workflow/main/functions/plot_points.py"
+  },
+  "PyPIPackageDownloads": {
+    "generate_points": [
+      "pandas"
+    ],
+    "plot_points": [
+      "matplotlib",
+      "pandas"
+    ]
+  }
+}
