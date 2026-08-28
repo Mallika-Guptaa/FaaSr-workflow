@@ -54,7 +54,7 @@ def load_soil_inputs(folder: str, input1: str, output1: str, output2: str, outpu
     # 1. Load raw sensor CSV
     # ------------------------------------------------------------------
     local_csv = os.path.join(tmpdir, "raw_sensor.csv")
-    faasr_get_file(local_file=local_csv, remote_folder=folder, remote_file=input1)
+    faasr_get_file(local_file=local_csv, remote_folder="Data", remote_file=input1)
     faasr_log(f"Loaded raw sensor file: {input1}")
 
     if os.path.getsize(local_csv) == 0:
