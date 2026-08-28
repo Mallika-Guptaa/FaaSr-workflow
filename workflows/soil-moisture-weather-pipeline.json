@@ -11,7 +11,7 @@
       "Type": "Python",
       "FunctionName": "load_soil_inputs",
       "Arguments": {
-        "folder": "workflow_data",
+        "folder": "Data",
         "input1": "sites_vwc_corrected.csv",
         "output1": "sensor_observations_standardized.csv",
         "output2": "site_locations.json",
@@ -27,7 +27,7 @@
       "Type": "Python",
       "FunctionName": "download_weather_data",
       "Arguments": {
-        "folder": "workflow_data",
+        "folder": "Data",
         "input1": "sensor_observations_standardized.csv",
         "input2": "site_locations.json",
         "output1": "agrimet_daily.csv",
