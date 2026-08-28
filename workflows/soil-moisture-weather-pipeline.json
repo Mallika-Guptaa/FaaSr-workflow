@@ -1,0 +1,85 @@
+{
+  "FunctionInvoke": "load-soil-inputs",
+  "WorkflowName": "soil-moisture-weather-pipeline",
+  "DefaultDataStore": "S3",
+  "LoggingDataStore": "S3",
+  "FaaSrLog": "FaaSrLog",
+  "InvocationIDFromDate": "%Y-%m-%d-%H-%M-%S",
+  "ActionList": {
+    "load-soil-inputs": {
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "load_soil_inputs",
+      "Arguments": {
+        "folder": "workflow_data",
+        "input1": "sites_vwc_corrected.csv",
+        "output1": "sensor_observations_standardized.csv",
+        "output2": "site_locations.json",
+        "output3": "action1_staging_manifest.json",
+        "output4": "01_load_soil_inputs_comparison_site_{rank}.png"
+      },
+      "InvokeNext": [
+        "download-weather-data"
+      ]
+    },
+    "download-weather-data": {
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "download_weather_data",
+      "Arguments": {
+        "folder": "workflow_data",
+        "input1": "sensor_observations_standardized.csv",
+        "input2": "site_locations.json",
+        "output1": "agrimet_daily.csv",
+        "output2": "gridmet_daily_by_site.csv",
+        "output3": "weather_merge_manifest.json",
+        "output4": "02_download_weather_data_site_{rank}.png"
+      },
+      "InvokeNext": []
+    }
+  },
+  "ActionContainers": {
+    "load-soil-inputs": "ghcr.io/faasr/github-actions-python:latest",
+    "download-weather-data": "ghcr.io/faasr/github-actions-python:latest"
+  },
+  "ComputeServers": {
+    "GH": {
+      "FaaSType": "GitHubActions",
+      "UserName": "Mallika-Guptaa",
+      "ActionRepoName": "FaaSr-workflow",
+      "Branch": "main",
+      "UseSecretStore": true
+    }
+  },
+  "DataStores": {
+    "S3": {
+      "Endpoint": "https://s3.amazonaws.com",
+      "Bucket": "faasr-bucket-smarttap-private",
+      "Region": "us-east-1",
+      "AccessKey": "S3_AccessKey",
+      "SecretKey": "S3_SecretKey",
+      "Writable": "TRUE"
+    }
+  },
+  "FunctionGitRepo": {
+    "load_soil_inputs": "Mallika-Guptaa/FaaSr-workflow/main/functions/load_soil_inputs.py",
+    "download_weather_data": "Mallika-Guptaa/FaaSr-workflow/main/functions/download_weather_data.py"
+  },
+  "PyPIPackageDownloads": {
+    "load_soil_inputs": [
+      "pandas",
+      "matplotlib",
+      "numpy"
+    ],
+    "download_weather_data": [
+      "requests",
+      "pandas",
+      "matplotlib",
+      "numpy",
+      "tenacity"
+    ]
+  },
+  "Secrets": [
+    "CLIMATE_API_KEY"
+  ]
+}
