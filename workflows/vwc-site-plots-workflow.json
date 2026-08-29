@@ -1,0 +1,73 @@
+{
+  "FunctionInvoke": "load-csv",
+  "WorkflowName": "vwc-site-plots-workflow",
+  "DefaultDataStore": "S3",
+  "LoggingDataStore": "S3",
+  "FaaSrLog": "FaaSrLog",
+  "InvocationIDFromDate": "%Y-%m-%d-%H-%M-%S",
+  "ActionList": {
+    "load-csv": {
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "load_csv",
+      "Arguments": {
+        "folder": "workflow_data",
+        "input1": "sensor_data.csv",
+        "output1": "vwc_raw.csv"
+      },
+      "InvokeNext": [
+        "generate-site-plots"
+      ]
+    },
+    "generate-site-plots": {
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "generate_site_plots",
+      "Arguments": {
+        "folder": "workflow_data",
+        "input1": "vwc_raw.csv",
+        "output1": "site_1_vwc_plot.png",
+        "output2": "site_2_vwc_plot.png",
+        "output3": "site_3_vwc_plot.png",
+        "output4": "site_4_vwc_plot.png"
+      },
+      "InvokeNext": []
+    }
+  },
+  "ActionContainers": {
+    "load-csv": "ghcr.io/faasr/github-actions-python:latest",
+    "generate-site-plots": "ghcr.io/faasr/github-actions-python:latest"
+  },
+  "ComputeServers": {
+    "GH": {
+      "FaaSType": "GitHubActions",
+      "UserName": "Mallika-Guptaa",
+      "ActionRepoName": "FaaSr-workflow",
+      "Branch": "main",
+      "UseSecretStore": true
+    }
+  },
+  "DataStores": {
+    "S3": {
+      "Endpoint": "https://s3.amazonaws.com",
+      "Bucket": "faasr-bucket-smarttap-private",
+      "Region": "us-east-1",
+      "AccessKey": "S3_AccessKey",
+      "SecretKey": "S3_SecretKey",
+      "Writable": "TRUE"
+    }
+  },
+  "FunctionGitRepo": {
+    "load_csv": "Mallika-Guptaa/FaaSr-workflow/main/functions/load_csv.py",
+    "generate_site_plots": "Mallika-Guptaa/FaaSr-workflow/main/functions/generate_site_plots.py"
+  },
+  "PyPIPackageDownloads": {
+    "load_csv": [
+      "pandas"
+    ],
+    "generate_site_plots": [
+      "pandas",
+      "matplotlib"
+    ]
+  }
+}
