@@ -2,10 +2,11 @@
   "ActionList": {
     "AuditInternalDateGaps": {
       "Arguments": {
-        "final_configs_prefix": "zentra_final_12_configs",
+        "raw_by_serial_prefix": "zentra_phase2_staging_manifest_v2_full_parallel/raw_by_serial",
         "audit_prefix": "zentra_gap_audit",
         "timezone_name": "America/Los_Angeles",
-        "serial_numbers": "ALL"
+        "serial_numbers": "ALL",
+        "fail_on_no_observations": false
       },
       "InvokeNext": [
         "RepairInternalDateGaps"
@@ -74,17 +75,14 @@
   },
   "PyPIPackageDownloads": {
     "audit_internal_date_gaps": [
-      "pandas",
-      "six==1.16.0"
+      "pandas"
     ],
     "repair_internal_date_gaps": [
       "pandas",
-      "requests",
-      "six==1.16.0"
+      "requests"
     ],
     "finish_internal_gap_repair": [
-      "pandas",
-      "six==1.16.0"
+      "pandas"
     ]
   },
   "Secrets": [
@@ -92,5 +90,5 @@
   ],
   "FaaSrLog": "FaaSrLog",
   "LoggingDataStore": "S3PRIVATE",
-  "WorkflowName": "ZentraAuditRepairInternalDateGapsV2"
+  "WorkflowName": "ZentraAuditRepairInternalDateGapsV3"
 }
