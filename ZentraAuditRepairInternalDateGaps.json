@@ -1,0 +1,93 @@
+{
+  "ActionList": {
+    "AuditInternalDateGaps": {
+      "Arguments": {
+        "raw_by_serial_prefix": "zentra_phase2_staging_manifest_v2_full_parallel/raw_by_serial",
+        "audit_prefix": "zentra_gap_audit",
+        "timezone_name": "America/Los_Angeles",
+        "serial_numbers": "ALL"
+      },
+      "InvokeNext": [
+        "RepairInternalDateGaps"
+      ],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "audit_internal_date_gaps"
+    },
+    "RepairInternalDateGaps": {
+      "Arguments": {
+        "audit_prefix": "zentra_gap_audit",
+        "plan_file": "internal_gap_plan_latest.json",
+        "progress_file": "internal_gap_repair_progress.json",
+        "raw_prefix": "zentra_raw_backfill",
+        "timezone_name": "America/Los_Angeles",
+        "per_page": 2000,
+        "sleep_seconds": 65,
+        "server": "https://zentracloud.com",
+        "api_version": "v4",
+        "max_gap_days_per_run": 50,
+        "max_api_calls_per_run": 100,
+        "retry_unresolved": false
+      },
+      "InvokeNext": [
+        "FinishInternalGapRepair"
+      ],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "repair_internal_date_gaps"
+    },
+    "FinishInternalGapRepair": {
+      "Arguments": {},
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "finish_internal_gap_repair"
+    }
+  },
+  "ComputeServers": {
+    "GH": {
+      "FaaSType": "GitHubActions",
+      "UseSecretStore": true,
+      "ActionRepoName": "FaaSr-workflow",
+      "Branch": "main",
+      "UserName": "Mallika-Guptaa"
+    }
+  },
+  "DataStores": {
+    "S3PRIVATE": {
+      "Bucket": "faasr-bucket-smarttap-private",
+      "Region": "us-east-1",
+      "Writable": "TRUE"
+    }
+  },
+  "ActionContainers": {
+    "AuditInternalDateGaps": "ghcr.io/faasr/github-actions-python:latest",
+    "RepairInternalDateGaps": "ghcr.io/faasr/github-actions-python:latest",
+    "FinishInternalGapRepair": "ghcr.io/faasr/github-actions-python:latest"
+  },
+  "FunctionInvoke": "AuditInternalDateGaps",
+  "DefaultDataStore": "S3PRIVATE",
+  "FunctionGitRepo": {
+    "audit_internal_date_gaps": "Mallika-Guptaa/zentra_backfill_workflow_files/python",
+    "repair_internal_date_gaps": "Mallika-Guptaa/zentra_backfill_workflow_files/python",
+    "finish_internal_gap_repair": "Mallika-Guptaa/zentra_backfill_workflow_files/python"
+  },
+  "PyPIPackageDownloads": {
+    "audit_internal_date_gaps": [
+      "pandas"
+    ],
+    "repair_internal_date_gaps": [
+      "pandas",
+      "requests"
+    ],
+    "finish_internal_gap_repair": [
+      "pandas"
+    ]
+  },
+  "Secrets": [
+    "ZENTRA_TOKEN"
+  ],
+  "FaaSrLog": "FaaSrLog",
+  "LoggingDataStore": "S3PRIVATE",
+  "WorkflowName": "ZentraAuditRepairInternalDateGaps"
+}
