@@ -1,0 +1,124 @@
+{
+  "FunctionInvoke": "load-site-metadata",
+  "WorkflowName": "agrimet-gridmet-vwc-workflow",
+  "DefaultDataStore": "S3",
+  "LoggingDataStore": "S3",
+  "FaaSrLog": "FaaSrLog",
+  "InvocationIDFromDate": "%Y-%m-%d-%H-%M-%S",
+  "ActionList": {
+    "load-site-metadata": {
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "load_site_metadata",
+      "Arguments": {
+        "folder": "Data",
+        "input1": "sites_vwc_corrected.csv",
+        "output1": "sites_metadata.json",
+        "output2": "site_location_1.json",
+        "output3": "site_location_2.json",
+        "output4": "site_location_3.json",
+        "output5": "site_location_4.json"
+      },
+      "InvokeNext": [
+        "fetch-agrimet-data",
+        "fetch-gridmet-data(4)"
+      ]
+    },
+    "fetch-agrimet-data": {
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "fetch_agrimet_data",
+      "Arguments": {
+        "folder": "Data",
+        "input1": "sites_metadata.json",
+        "output1": "agrimet.csv"
+      },
+      "InvokeNext": [
+        "merge-and-finalize"
+      ]
+    },
+    "fetch-gridmet-data": {
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "fetch_gridmet_data",
+      "Arguments": {
+        "folder": "Data",
+        "input1": "site_location_{rank}.json",
+        "input2": "sites_vwc_corrected.csv",
+        "output1": "gridmet_site_{rank}.csv"
+      },
+      "InvokeNext": [
+        "merge-and-finalize"
+      ]
+    },
+    "merge-and-finalize": {
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "merge_and_finalize",
+      "Arguments": {
+        "folder": "Data",
+        "input1": "agrimet.csv",
+        "input2": "gridmet_site_1.csv",
+        "input3": "gridmet_site_2.csv",
+        "input4": "gridmet_site_3.csv",
+        "input5": "gridmet_site_4.csv",
+        "input6": "sites_vwc_corrected.csv",
+        "output1": "agrimet_gridmet_merged.csv"
+      },
+      "InvokeNext": []
+    }
+  },
+  "ActionContainers": {
+    "load-site-metadata": "ghcr.io/faasr/github-actions-python:latest",
+    "fetch-agrimet-data": "ghcr.io/faasr/github-actions-python:latest",
+    "fetch-gridmet-data": "ghcr.io/faasr/github-actions-python:latest",
+    "merge-and-finalize": "ghcr.io/faasr/github-actions-python:latest"
+  },
+  "ComputeServers": {
+    "GH": {
+      "FaaSType": "GitHubActions",
+      "UserName": "Mallika-Guptaa",
+      "ActionRepoName": "FaaSr-workflow",
+      "Branch": "main",
+      "UseSecretStore": true
+    }
+  },
+  "DataStores": {
+    "S3": {
+      "Endpoint": "https://s3.amazonaws.com",
+      "Bucket": "faasr-bucket-smarttap-private",
+      "Region": "us-east-1",
+      "AccessKey": "S3_AccessKey",
+      "SecretKey": "S3_SecretKey",
+      "Writable": "TRUE"
+    }
+  },
+  "FunctionGitRepo": {
+    "load_site_metadata": "Mallika-Guptaa/FaaSr-workflow/main/functions/load_site_metadata.py",
+    "fetch_agrimet_data": "Mallika-Guptaa/FaaSr-workflow/main/functions/fetch_agrimet_data.py",
+    "fetch_gridmet_data": "Mallika-Guptaa/FaaSr-workflow/main/functions/fetch_gridmet_data.py",
+    "merge_and_finalize": "Mallika-Guptaa/FaaSr-workflow/main/functions/merge_and_finalize.py"
+  },
+  "PyPIPackageDownloads": {
+    "load_site_metadata": [
+      "pandas"
+    ],
+    "fetch_agrimet_data": [
+      "requests",
+      "pandas"
+    ],
+    "fetch_gridmet_data": [
+      "xarray",
+      "netCDF4",
+      "pandas",
+      "numpy",
+      "requests"
+    ],
+    "merge_and_finalize": [
+      "pandas"
+    ]
+  },
+  "Secrets": [
+    "GRIDMET_API_KEY"
+  ]
+}
