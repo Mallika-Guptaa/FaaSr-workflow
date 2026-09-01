@@ -11,19 +11,19 @@
       "Type": "Python",
       "FunctionName": "generate_points",
       "Arguments": {
-        "folder": "SimpleFunctionPlot",
+        "folder": "workflow_data",
         "output1": "claude_points.csv"
       },
       "InvokeNext": [
-        "plot-points"
+        "create-plot"
       ]
     },
-    "plot-points": {
+    "create-plot": {
       "FaaSServer": "GH",
       "Type": "Python",
-      "FunctionName": "plot_points",
+      "FunctionName": "create_plot",
       "Arguments": {
-        "folder": "SimpleFunctionPlot",
+        "folder": "workflow_data",
         "input1": "claude_points.csv",
         "output1": "claude_plot.png"
       },
@@ -32,7 +32,7 @@
   },
   "ActionContainers": {
     "generate-points": "ghcr.io/faasr/github-actions-python:latest",
-    "plot-points": "ghcr.io/faasr/github-actions-python:latest"
+    "create-plot": "ghcr.io/faasr/github-actions-python:latest"
   },
   "ComputeServers": {
     "GH": {
@@ -55,13 +55,14 @@
   },
   "FunctionGitRepo": {
     "generate_points": "Mallika-Guptaa/FaaSr-workflow/main/functions/generate_points.py",
-    "plot_points": "Mallika-Guptaa/FaaSr-workflow/main/functions/plot_points.py"
+    "create_plot": "Mallika-Guptaa/FaaSr-workflow/main/functions/create_plot.py"
   },
   "PyPIPackageDownloads": {
     "generate_points": [
+      "numpy",
       "pandas"
     ],
-    "plot_points": [
+    "create_plot": [
       "matplotlib",
       "pandas"
     ]
