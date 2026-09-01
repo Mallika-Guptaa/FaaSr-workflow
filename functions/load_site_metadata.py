@@ -10,55 +10,74 @@ def load_site_metadata(folder: str, input1: str, input2: str, output1: str, outp
     df = pd.read_csv(local_csv)
     faasr_log(f"Loaded {len(df)} rows from {input1}")
 
-    if "site" not in df.columns:
-        msg = f"CSV missing required 'site' column; found: {list(df.columns)}"
+    if "Site" not in df.columns:
+        msg = f"CSV missing required 'Site' column; found: {list(df.columns)}"
         faasr_log(msg)
         raise ValueError(msg)
 
-    for col in ("start_date", "end_date"):
-        if col not in df.columns:
-            msg = f"CSV missing required column: {col}"
-            faasr_log(msg)
-            raise ValueError(msg)
+    # Load site_locations.json for lat/lon and optional start/end dates
+    local_locs = "site_locations.json"
+    faasr_get_file(local_file=local_locs, remote_folder=folder, remote_file=input2)
+    with open(local_locs) as f:
+        site_locations = json.load(f)
+    faasr_log(f"Loaded {len(site_locations)} entries from {input2}")
 
-    # One record per unique site_id (first occurrence of start/end date)
-    seen = {}
-    for _, row in df.iterrows():
-        sid = str(row["site"]).strip()
-        if sid not in seen:
-            seen[sid] = {"start_date": str(row["start_date"]), "end_date": str(row["end_date"])}
+    # Derive per-site date ranges: prefer site_locations.json, fall back to CSV Date min/max
+    date_range_from_csv = {}
+    if "Date" in df.columns:
+        for sid, grp in df.groupby("Site"):
+            dates = pd.to_datetime(grp["Date"], errors="coerce").dropna()
+            if not dates.empty:
+                date_range_from_csv[str(sid).strip()] = {
+                    "start_date": dates.min().strftime("%Y-%m-%d"),
+                    "end_date": dates.max().strftime("%Y-%m-%d"),
+                }
 
-    if not seen:
+    # Collect unique site IDs from CSV (in first-seen order)
+    site_ids = list(dict.fromkeys(str(s).strip() for s in df["Site"]))
+
+    if not site_ids:
         msg = "No site records found in CSV"
         faasr_log(msg)
         raise ValueError(msg)
 
-    site_ids = list(seen.keys())
     if len(site_ids) < 4:
         msg = f"Expected at least 4 sites for 4 ranked instances, found {len(site_ids)}: {site_ids}"
         faasr_log(msg)
         raise ValueError(msg)
 
-    # Load per-site JSON files for lat/lon
     records = []
     for sid in site_ids:
-        json_filename = input2.replace("{site_id}", sid)
-        local_json = f"{sid}.json"
-        faasr_get_file(local_file=local_json, remote_folder=folder, remote_file=json_filename)
-        with open(local_json) as f:
-            site_info = json.load(f)
-        if "latitude" not in site_info or "longitude" not in site_info:
-            msg = f"Site JSON for {sid} missing latitude or longitude; keys: {list(site_info.keys())}"
+        if sid not in site_locations:
+            msg = f"Site '{sid}' not found in {input2}; available: {list(site_locations.keys())}"
             faasr_log(msg)
             raise ValueError(msg)
+
+        loc = site_locations[sid]
+        if "latitude" not in loc or "longitude" not in loc:
+            msg = f"site_locations.json entry for '{sid}' missing latitude or longitude"
+            faasr_log(msg)
+            raise ValueError(msg)
+
+        # Resolve start/end dates: JSON > CSV-derived > hardcoded fallback
+        start_date = (
+            loc.get("start_date")
+            or date_range_from_csv.get(sid, {}).get("start_date")
+            or "2025-06-23"
+        )
+        end_date = (
+            loc.get("end_date")
+            or date_range_from_csv.get(sid, {}).get("end_date")
+            or "2025-10-08"
+        )
+
         records.append({
             "site_id": sid,
-            "latitude": float(site_info["latitude"]),
-            "longitude": float(site_info["longitude"]),
-            "start_date": seen[sid]["start_date"],
-            "end_date": seen[sid]["end_date"],
+            "latitude": float(loc["latitude"]),
+            "longitude": float(loc["longitude"]),
+            "start_date": str(start_date),
+            "end_date": str(end_date),
         })
-        os.remove(local_json)
 
     # Write combined metadata
     local_meta = "sites_metadata.json"
@@ -87,3 +106,4 @@ def load_site_metadata(folder: str, input1: str, input2: str, output1: str, outp
         os.remove(local_loc)
 
     os.remove(local_csv)
+    os.remove(local_locs)
