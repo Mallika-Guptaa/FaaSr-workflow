@@ -11,7 +11,7 @@
       "Type": "Python",
       "FunctionName": "generate_points",
       "Arguments": {
-        "folder": "workflow_data",
+        "folder": "SimpleFunctionPlot",
         "output1": "claude_points.csv"
       },
       "InvokeNext": [
@@ -23,7 +23,7 @@
       "Type": "Python",
       "FunctionName": "create_plot",
       "Arguments": {
-        "folder": "workflow_data",
+        "folder": "SimpleFunctionPlot",
         "input1": "claude_points.csv",
         "output1": "claude_plot.png"
       },
@@ -59,7 +59,6 @@
   },
   "PyPIPackageDownloads": {
     "generate_points": [
-      "numpy",
       "pandas"
     ],
     "create_plot": [
