@@ -36,7 +36,7 @@ def fetch_gridmet_data(folder: str, input1: str, input2: str, output1: str) -> N
     faasr_get_file(local_file=local_csv, remote_folder=folder, remote_file=input2)
     sites_df = pd.read_csv(local_csv)
     os.remove(local_csv)
-    if site_id not in sites_df["site_id"].astype(str).values:
+    if site_id not in sites_df["Site"].astype(str).values:
         msg = f"site_id {site_id} not found in {input2}"
         faasr_log(msg)
         raise ValueError(msg)
