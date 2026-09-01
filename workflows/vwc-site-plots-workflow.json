@@ -16,6 +16,21 @@
         "output1": "sites_vwc_corrected.csv"
       },
       "InvokeNext": [
+        "download-weather-data"
+      ]
+    },
+    "download-weather-data": {
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "download_weather_data",
+      "Arguments": {
+        "folder": "Data",
+        "input1": "sites_vwc_corrected.csv",
+        "output1": "agrimet.csv",
+        "output2": "gridmet.csv",
+        "output3": "weather_merged.csv"
+      },
+      "InvokeNext": [
         "generate-site-plots"
       ]
     },
@@ -60,6 +75,7 @@
       "FunctionName": "create_site_locations_json",
       "Arguments": {
         "folder": "Data",
+        "input1": "site_4_vwc_plot.png",
         "output1": "site_locations.json"
       },
       "InvokeNext": []
@@ -67,6 +83,7 @@
   },
   "ActionContainers": {
     "load-vwc-data": "ghcr.io/faasr/github-actions-python:latest",
+    "download-weather-data": "ghcr.io/faasr/github-actions-python:latest",
     "generate-site-plots": "ghcr.io/faasr/github-actions-python:latest",
     "upload-plots": "ghcr.io/faasr/github-actions-python:latest",
     "create-site-locations-json": "ghcr.io/faasr/github-actions-python:latest"
@@ -92,6 +109,7 @@
   },
   "FunctionGitRepo": {
     "load_vwc_data": "Mallika-Guptaa/FaaSr-workflow/main/functions/load_vwc_data.py",
+    "download_weather_data": "Mallika-Guptaa/FaaSr-workflow/main/functions/download_weather_data.py",
     "generate_site_plots": "Mallika-Guptaa/FaaSr-workflow/main/functions/generate_site_plots.py",
     "upload_plots": "Mallika-Guptaa/FaaSr-workflow/main/functions/upload_plots.py",
     "create_site_locations_json": "Mallika-Guptaa/FaaSr-workflow/main/functions/create_site_locations_json.py"
@@ -100,9 +118,19 @@
     "load_vwc_data": [
       "pandas"
     ],
+    "download_weather_data": [
+      "requests",
+      "pandas",
+      "numpy",
+      "xarray",
+      "netCDF4"
+    ],
     "generate_site_plots": [
       "pandas",
       "matplotlib"
     ]
-  }
+  },
+  "Secrets": [
+    "AGRIMET_API_TOKEN"
+  ]
 }
