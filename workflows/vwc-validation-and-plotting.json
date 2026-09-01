@@ -1,0 +1,73 @@
+{
+  "FunctionInvoke": "validate-vwc-data",
+  "WorkflowName": "vwc-validation-and-plotting",
+  "DefaultDataStore": "S3",
+  "LoggingDataStore": "S3",
+  "FaaSrLog": "FaaSrLog",
+  "InvocationIDFromDate": "%Y-%m-%d-%H-%M-%S",
+  "ActionList": {
+    "validate-vwc-data": {
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "validate_vwc_data",
+      "Arguments": {
+        "folder": "workflow_data",
+        "input1": "sites_vwc_corrected.csv",
+        "output1": "sites_vwc_validated.csv"
+      },
+      "InvokeNext": [
+        "plot-vwc-by-site"
+      ]
+    },
+    "plot-vwc-by-site": {
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "plot_vwc_by_site",
+      "Arguments": {
+        "folder": "workflow_data",
+        "input1": "sites_vwc_validated.csv",
+        "output1": "site_1_vwc_plot.png",
+        "output2": "site_2_vwc_plot.png",
+        "output3": "site_3_vwc_plot.png",
+        "output4": "site_4_vwc_plot.png"
+      },
+      "InvokeNext": []
+    }
+  },
+  "ActionContainers": {
+    "validate-vwc-data": "ghcr.io/faasr/github-actions-python:latest",
+    "plot-vwc-by-site": "ghcr.io/faasr/github-actions-python:latest"
+  },
+  "ComputeServers": {
+    "GH": {
+      "FaaSType": "GitHubActions",
+      "UserName": "Mallika-Guptaa",
+      "ActionRepoName": "FaaSr-workflow",
+      "Branch": "main",
+      "UseSecretStore": true
+    }
+  },
+  "DataStores": {
+    "S3": {
+      "Endpoint": "https://s3.amazonaws.com",
+      "Bucket": "faasr-bucket-smarttap-private",
+      "Region": "us-east-1",
+      "AccessKey": "S3_AccessKey",
+      "SecretKey": "S3_SecretKey",
+      "Writable": "TRUE"
+    }
+  },
+  "FunctionGitRepo": {
+    "validate_vwc_data": "Mallika-Guptaa/FaaSr-workflow/main/functions/validate_vwc_data.py",
+    "plot_vwc_by_site": "Mallika-Guptaa/FaaSr-workflow/main/functions/plot_vwc_by_site.py"
+  },
+  "PyPIPackageDownloads": {
+    "validate_vwc_data": [
+      "pandas"
+    ],
+    "plot_vwc_by_site": [
+      "pandas",
+      "matplotlib"
+    ]
+  }
+}
