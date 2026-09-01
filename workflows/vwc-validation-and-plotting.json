@@ -11,7 +11,7 @@
       "Type": "Python",
       "FunctionName": "validate_vwc_data",
       "Arguments": {
-        "folder": "data",
+        "folder": "Data",
         "input1": "sites_vwc_corrected.csv",
         "output1": "sites_vwc_validated.csv"
       },
@@ -24,7 +24,7 @@
       "Type": "Python",
       "FunctionName": "plot_vwc_by_site",
       "Arguments": {
-        "folder": "data",
+        "folder": "Data",
         "input1": "sites_vwc_validated.csv",
         "output1": "site_1_vwc_plot.png",
         "output2": "site_2_vwc_plot.png",
