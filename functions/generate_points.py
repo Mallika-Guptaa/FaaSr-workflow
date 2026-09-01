@@ -1,16 +1,20 @@
+import pandas as pd
+import tempfile
+import os
+
 def generate_points(folder: str, output1: str) -> None:
-    import numpy as np
-    import pandas as pd
-    import tempfile, os
+    x_values = list(range(20))
+    y_values = [2 * x + 3 for x in x_values]
 
-    x = np.arange(20, dtype=float)
-    y = 2 * x + 3
-    df = pd.DataFrame({"x": x, "y": y})
+    df = pd.DataFrame({"x": x_values, "y": y_values})
 
-    tmp = tempfile.NamedTemporaryFile(suffix=".csv", delete=False)
+    with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+        tmp_path = tmp.name
+
     try:
-        df.to_csv(tmp.name, index=False)
-        faasr_log(f"Generated {len(df)} points for y=2x+3, uploading as {output1}")
-        faasr_put_file(local_file=tmp.name, remote_folder=folder, remote_file=output1)
+        df.to_csv(tmp_path, index=False)
+        faasr_log(f"Generated {len(df)} points for y = 2x + 3")
+        faasr_put_file(local_file=tmp_path, remote_folder=folder, remote_file=output1)
+        faasr_log(f"Uploaded {output1} to {folder}")
     finally:
-        os.unlink(tmp.name)
+        os.unlink(tmp_path)
