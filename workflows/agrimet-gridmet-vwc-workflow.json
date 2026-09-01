@@ -13,11 +13,9 @@
       "Arguments": {
         "folder": "Data",
         "input1": "sites_vwc_corrected.csv",
+        "input2": "{site_id}.json",
         "output1": "sites_metadata.json",
-        "output2": "site_location_1.json",
-        "output3": "site_location_2.json",
-        "output4": "site_location_3.json",
-        "output5": "site_location_4.json"
+        "output2": "site_location_{rank}.json"
       },
       "InvokeNext": [
         "fetch-agrimet-data",
