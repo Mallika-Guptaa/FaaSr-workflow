@@ -13,7 +13,7 @@
       "Arguments": {
         "folder": "Data",
         "input1": "sites_vwc_corrected.csv",
-        "input2": "{site_id}.json",
+        "input2": "site_locations.json",
         "output1": "sites_metadata.json",
         "output2": "site_location_{rank}.json"
       },
@@ -56,11 +56,9 @@
       "Arguments": {
         "folder": "Data",
         "input1": "agrimet.csv",
-        "input2": "gridmet_site_1.csv",
-        "input3": "gridmet_site_2.csv",
-        "input4": "gridmet_site_3.csv",
-        "input5": "gridmet_site_4.csv",
-        "input6": "sites_vwc_corrected.csv",
+        "input2": "gridmet_site_{rank}.csv",
+        "input3": "sites_vwc_corrected.csv",
+        "input4": "site_locations.json",
         "output1": "agrimet_gridmet_merged.csv"
       },
       "InvokeNext": []
