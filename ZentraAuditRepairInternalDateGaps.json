@@ -3,10 +3,12 @@
     "AuditInternalDateGaps": {
       "Arguments": {
         "raw_by_serial_prefix": "zentra_phase2_staging_manifest_v2_full_parallel/raw_by_serial",
+        "raw_prefix": "zentra_raw_backfill",
         "audit_prefix": "zentra_gap_audit",
         "timezone_name": "America/Los_Angeles",
         "serial_numbers": "ALL",
-        "fail_on_no_observations": false
+        "fail_on_no_observations": false,
+        "fallback_to_raw_s3": true
       },
       "InvokeNext": [
         "RepairInternalDateGaps"
@@ -90,5 +92,5 @@
   ],
   "FaaSrLog": "FaaSrLog",
   "LoggingDataStore": "S3PRIVATE",
-  "WorkflowName": "ZentraAuditRepairInternalDateGapsV3"
+  "WorkflowName": "ZentraAuditRepairInternalDateGapsV4"
 }
