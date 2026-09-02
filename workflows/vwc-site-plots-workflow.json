@@ -11,7 +11,7 @@
       "Type": "Python",
       "FunctionName": "load_vwc_data",
       "Arguments": {
-        "folder": "workflow_data",
+        "folder": "Data",
         "input1": "sites_vwc_corrected.csv",
         "output1": "vwc_validated.csv"
       },
@@ -25,7 +25,7 @@
       "Type": "Python",
       "FunctionName": "download_weather_data",
       "Arguments": {
-        "folder": "workflow_data",
+        "folder": "Data",
         "input1": "vwc_validated.csv",
         "output1": "agrimet.csv",
         "output2": "gridmet.csv",
@@ -40,7 +40,7 @@
       "Type": "Python",
       "FunctionName": "generate_site_plots",
       "Arguments": {
-        "folder": "workflow_data",
+        "folder": "Data",
         "input1": "vwc_validated.csv",
         "output1": "site_1_vwc_plot.png",
         "output2": "site_2_vwc_plot.png",
@@ -56,7 +56,7 @@
       "Type": "Python",
       "FunctionName": "upload_plots",
       "Arguments": {
-        "folder": "workflow_data",
+        "folder": "Data",
         "input1": "site_1_vwc_plot.png",
         "input2": "site_2_vwc_plot.png",
         "input3": "site_3_vwc_plot.png",
@@ -73,7 +73,7 @@
       "Type": "Python",
       "FunctionName": "create_site_locations_json",
       "Arguments": {
-        "folder": "workflow_data",
+        "folder": "Data",
         "input1": "vwc_validated.csv",
         "output1": "site_locations.json"
       },
