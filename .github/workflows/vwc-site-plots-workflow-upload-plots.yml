@@ -19,7 +19,6 @@ jobs:
             GH_PAT: ${{ secrets.GH_PAT}}
             S3_AccessKey: ${{ secrets.S3_AccessKey}}
             S3_SecretKey: ${{ secrets.S3_SecretKey}}
-            AGRIMET_API_TOKEN: ${{ secrets.AGRIMET_API_TOKEN}}
             OVERWRITTEN: ${{ github.event.inputs.OVERWRITTEN }}
             PAYLOAD_URL: ${{ github.event.inputs.PAYLOAD_URL }}
 
