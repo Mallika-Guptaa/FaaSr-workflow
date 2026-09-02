@@ -1,283 +1,363 @@
 import os
-import tempfile
-import pandas as pd
+import re
+import time
 import numpy as np
+import pandas as pd
 import requests
+import xarray as xr
 
-START_DATE = "2025-06-23"
-END_DATE   = "2025-10-08"
+DATE_START = "2025-06-23"
+DATE_END = "2025-10-08"
+
+AGRIMET_URL = "https://www.usbr.gov/pn-bin/daily.pl"
 AGRIMET_STATION = "BEWO"
+AGRIMET_PCODES = ["PP", "MN", "MX", "MM", "ETOS", "ETRS", "SR", "UA"]
 
-SITE_COORDS = {
-    1: (44.158669, -121.394525),
-    2: (44.157778, -121.395125),
-    3: (44.158756, -121.400275),
-    4: (44.159150, -121.402769),
+AGRIMET_COL_MAP = {
+    "PP": "precip_mm",
+    "MN": "tmin_c",
+    "MX": "tmax_c",
+    "MM": "tmean_c",
+    "ETOS": "eto_grass_mm",
+    "ETRS": "eto_alfalfa_mm",
+    "SR": "solar_rad_mj_m2",
+    "UA": "wind_speed_m_s",
 }
 
+SITES = [
+    {"Site": 1, "latitude": 44.158669, "longitude": -121.394525},
+    {"Site": 2, "latitude": 44.157778, "longitude": -121.395125},
+    {"Site": 3, "latitude": 44.158756, "longitude": -121.400275},
+    {"Site": 4, "latitude": 44.159150, "longitude": -121.402769},
+]
 
-def _fetch_agrimet() -> pd.DataFrame:
-    """Fetch daily AgriMet data for station BEWO."""
-    url = "https://api.agrimet.usbr.gov/api/v1/daily"
-    params = {
-        "stations": AGRIMET_STATION,
-        "startDate": START_DATE,
-        "endDate": END_DATE,
-        "interval": "daily",
-    }
+GRIDMET_VAR_MAP = {
+    "pr": "precip_mm",
+    "tmmn": "tmin_c",
+    "tmmx": "tmax_c",
+    "pet": "eto_grass_mm",
+    "etr": "eto_alfalfa_mm",
+    "srad": "solar_rad_mj_m2",
+    "vs": "wind_speed_m_s",
+}
+
+GRIDMET_BASE = (
+    "https://thredds.northwestknowledge.net/thredds/dodsC/MET/{var}/{var}_2025.nc#fillmismatch"
+)
+
+WEATHER_COLS = [
+    "precip_mm", "tmin_c", "tmax_c", "tmean_c",
+    "eto_grass_mm", "eto_alfalfa_mm", "solar_rad_mj_m2", "wind_speed_m_s",
+]
+
+
+def _retry(fn, retries, label):
+    for attempt in range(retries):
+        try:
+            return fn()
+        except Exception as e:
+            faasr_log(f"WARNING: {label} attempt {attempt + 1}/{retries} failed: {e}")
+            if attempt == retries - 1:
+                raise RuntimeError(f"{label} failed after {retries} attempts: {e}") from e
+            time.sleep(5 * (attempt + 1))
+
+
+def _to_date_strings(times):
     try:
-        token = faasr_secret("AGRIMET_API_TOKEN")
-        headers = {"Authorization": f"Bearer {token}"}
-    except (KeyError, Exception):
-        # No token env var available; try unauthenticated (public endpoint)
-        headers = {}
+        return pd.to_datetime(times).strftime("%Y-%m-%d").tolist()
+    except Exception:
+        return [f"{t.year:04d}-{t.month:02d}-{t.day:02d}" for t in times]
 
-    faasr_log(f"Fetching AgriMet data for station {AGRIMET_STATION} ({START_DATE} to {END_DATE})")
-    resp = requests.get(url, params=params, headers=headers, timeout=60)
-    if not resp.ok:
-        msg = f"AgriMet API error {resp.status_code}: {resp.text[:200]}"
-        faasr_log(msg)
-        raise RuntimeError(msg)
 
-    data = resp.json()
-    # The AgriMet API returns a list of observation dicts.
-    # Normalise to a flat DataFrame regardless of exact nesting.
-    if isinstance(data, list):
-        records = data
-    elif isinstance(data, dict) and "data" in data:
-        records = data["data"]
-    elif isinstance(data, dict) and "observations" in data:
-        records = data["observations"]
-    else:
-        msg = f"Unexpected AgriMet response structure: {list(data.keys()) if isinstance(data, dict) else type(data)}"
-        faasr_log(msg)
-        raise RuntimeError(msg)
+def _fetch_agrimet():
+    params = [
+        ("station", AGRIMET_STATION),
+        ("year", "2025"), ("month", "6"), ("day", "23"),
+        ("year", "2025"), ("month", "10"), ("day", "8"),
+    ]
+    for p in AGRIMET_PCODES:
+        params.append(("pcode", p))
+
+    def _do_fetch():
+        faasr_log(f"Fetching AgriMet data from {AGRIMET_URL} for station {AGRIMET_STATION}")
+        resp = requests.get(AGRIMET_URL, params=params, timeout=60)
+        if resp.status_code != 200:
+            raise RuntimeError(
+                f"AgriMet endpoint returned HTTP {resp.status_code}: {resp.text[:300]}"
+            )
+        return resp.text
+
+    text = _retry(_do_fetch, 3, "AgriMet fetch")
+
+    # Strip HTML tags
+    text = re.sub(r"<[^>]+>", " ", text)
+
+    # Extract BEGIN DATA ... END DATA block
+    match = re.search(r"BEGIN\s+DATA(.*?)END\s+DATA", text, re.DOTALL | re.IGNORECASE)
+    if not match:
+        raise RuntimeError(
+            f"AgriMet response missing BEGIN DATA/END DATA markers. "
+            f"Response snippet: {text[:500]}"
+        )
+
+    block = match.group(1).strip()
+    lines = [l.strip() for l in block.split("\n") if l.strip()]
+    if not lines:
+        raise RuntimeError("AgriMet data block is empty between BEGIN/END DATA markers")
+
+    # Parse header: comma-separated "DATE, BEWO PP, BEWO MN, ..."
+    header_line = lines[0]
+    col_pat = re.compile(r"\b" + re.escape(AGRIMET_STATION) + r"\s+(\w+)\b")
+    header_pcodes = col_pat.findall(header_line)
+    if not header_pcodes:
+        raise RuntimeError(
+            f"Could not find column names in AgriMet header: {header_line[:300]}"
+        )
+    faasr_log(f"AgriMet response pcodes: {header_pcodes}")
+
+    records = []
+    for line in lines[1:]:
+        # Data rows are comma-separated: "MM/DD/YYYY, val0, val1, ..."
+        tokens = [t.strip() for t in line.split(",")]
+        if len(tokens) < 1 + len(header_pcodes):
+            continue
+        date_raw = tokens[0]
+        data_vals = tokens[1:]
+
+        try:
+            date_str = pd.to_datetime(date_raw).strftime("%Y-%m-%d")
+        except Exception:
+            continue
+
+        row = {"Date": date_str, "station": AGRIMET_STATION}
+        for pcode, val_str in zip(header_pcodes, data_vals):
+            col = AGRIMET_COL_MAP.get(pcode)
+            if col is None:
+                continue
+            try:
+                row[col] = float(val_str)
+            except (ValueError, TypeError):
+                row[col] = np.nan
+        records.append(row)
 
     if not records:
-        msg = f"AgriMet returned no records for station {AGRIMET_STATION}"
-        faasr_log(msg)
-        raise RuntimeError(msg)
+        raise RuntimeError(
+            "AgriMet response parsed to zero rows — no usable dates returned"
+        )
 
-    df = pd.json_normalize(records)
+    df = pd.DataFrame(records)
 
-    # --- Column mapping heuristics (field names vary by API version) ---
-    def _col(candidates):
-        for c in candidates:
-            for col in df.columns:
-                if col.lower() == c.lower() or col.lower().endswith("." + c.lower()):
-                    return col
-        return None
+    # Unit conversions (apply only to columns present)
+    if "precip_mm" in df.columns:
+        df["precip_mm"] = df["precip_mm"] * 25.4  # inches → mm
+    for col in ["tmin_c", "tmax_c", "tmean_c"]:
+        if col in df.columns:
+            df[col] = (df[col] - 32.0) * 5.0 / 9.0  # °F → °C
+    if "eto_grass_mm" in df.columns:
+        df["eto_grass_mm"] = df["eto_grass_mm"] * 25.4  # inches → mm
+    if "eto_alfalfa_mm" in df.columns:
+        df["eto_alfalfa_mm"] = df["eto_alfalfa_mm"] * 25.4  # inches → mm
+    if "solar_rad_mj_m2" in df.columns:
+        df["solar_rad_mj_m2"] = df["solar_rad_mj_m2"] * 0.041868  # Langleys → MJ/m²
+    if "wind_speed_m_s" in df.columns:
+        df["wind_speed_m_s"] = df["wind_speed_m_s"] * 0.44704  # mph → m/s
 
-    date_col   = _col(["date", "Date", "datetime", "DateTime", "observationDate"])
-    precip_col = _col(["precip", "precipitation", "PCP", "PRECIP", "PP"])
-    tmin_col   = _col(["tmin", "Tmin", "minTemp", "min_temp", "TMIN", "air_temp_min"])
-    tmax_col   = _col(["tmax", "Tmax", "maxTemp", "max_temp", "TMAX", "air_temp_max"])
-    tmean_col  = _col(["tmean", "Tmean", "meanTemp", "mean_temp", "TMEAN", "air_temp_mean", "avgTemp"])
-    eto_grass_col   = _col(["eto", "ETO", "et_grass", "eto_grass", "ETOG", "evapotranspiration_grass"])
-    eto_alfalfa_col = _col(["etoa", "ETOA", "et_alfalfa", "eto_alfalfa", "evapotranspiration_alfalfa"])
-    solar_col  = _col(["solar", "Solar", "solar_rad", "solarRad", "SRAD", "sr"])
-    wind_col   = _col(["wind", "Wind", "windspeed", "wind_speed", "WS", "ws"])
+    df = df.sort_values("Date").reset_index(drop=True)
 
-    if date_col is None:
-        msg = f"Cannot identify date column in AgriMet response. Columns: {list(df.columns)}"
-        faasr_log(msg)
-        raise RuntimeError(msg)
-
-    out = pd.DataFrame()
-    out["Date"]   = pd.to_datetime(df[date_col]).dt.normalize()
-    out["station"] = AGRIMET_STATION
-
-    def _safe(col, factor=1.0):
-        if col is None:
-            return np.nan
-        return pd.to_numeric(df[col], errors="coerce") * factor
-
-    # Precipitation: convert inches → mm if needed (AgriMet typically returns inches)
-    precip_raw = _safe(precip_col)
-    out["precip_mm"] = precip_raw * 25.4  # inches to mm
-
-    # Temperatures: detect unit from magnitude (°F typical for AgriMet, but may be °C)
-    tmin_raw  = _safe(tmin_col)
-    tmax_raw  = _safe(tmax_col)
-    tmean_raw = _safe(tmean_col)
-
-    def _f_to_c(s):
-        # Use mean to guess unit: if most values > 40 assume °F
-        med = s.median()
-        if pd.notna(med) and med > 40:
-            return (s - 32) * 5.0 / 9.0
-        return s
-
-    out["tmin_c"]  = _f_to_c(tmin_raw)
-    out["tmax_c"]  = _f_to_c(tmax_raw)
-    out["tmean_c"] = _f_to_c(tmean_raw)
-
-    # ET: inches → mm
-    out["eto_grass_mm"]   = _safe(eto_grass_col) * 25.4
-    out["eto_alfalfa_mm"] = _safe(eto_alfalfa_col) * 25.4
-
-    # Solar radiation: detect units (Langleys → MJ/m2: * 0.04184; W/m2 daily avg needs * 0.0864)
-    solar_raw = _safe(solar_col)
-    if solar_raw is not None and not solar_raw.isna().all():
-        med = solar_raw.median()
-        if pd.notna(med):
-            if med > 1000:
-                # Probably W/m2 mean → MJ/m2/day
-                out["solar_rad_mj_m2"] = solar_raw * 0.0864
-            elif med > 100:
-                # Probably Langleys
-                out["solar_rad_mj_m2"] = solar_raw * 0.04184
-            else:
-                out["solar_rad_mj_m2"] = solar_raw
-        else:
-            out["solar_rad_mj_m2"] = np.nan
-    else:
-        out["solar_rad_mj_m2"] = np.nan
-
-    # Wind: mph → m/s
-    wind_raw = _safe(wind_col)
-    out["wind_speed_m_s"] = wind_raw * 0.44704
-
-    out = out.sort_values("Date").reset_index(drop=True)
-    faasr_log(f"AgriMet: {len(out)} daily rows for station {AGRIMET_STATION}")
-    return out
-
-
-def _fetch_gridmet_site(site: int, lat: float, lon: float) -> pd.DataFrame:
-    """Fetch gridMET data for one site via the REST point query."""
-    # gridMET REST API endpoint (University of Idaho)
-    base_url = "https://gridmet.climatologylab.org/api/v1/point"
-    # Variables: precipitation_amount, air_temperature (min/max), wind_speed,
-    #            surface_downwelling_shortwave_flux_in_air, potential_evapotranspiration
-    variables = [
-        "precipitation_amount",
-        "daily_minimum_temperature",
-        "daily_maximum_temperature",
-        "wind_speed",
-        "surface_downwelling_shortwave_flux_in_air",
-        "potential_evapotranspiration",
+    required = [
+        "Date", "station", "precip_mm", "tmin_c", "tmax_c", "tmean_c",
+        "eto_grass_mm", "eto_alfalfa_mm", "solar_rad_mj_m2", "wind_speed_m_s",
     ]
+    for c in required:
+        if c not in df.columns:
+            df[c] = np.nan
 
-    frames = []
-    for var in variables:
-        params = {
-            "lat": lat,
-            "lon": lon,
-            "start": START_DATE,
-            "end": END_DATE,
-            "variable": var,
-            "unitType": "si",
-        }
-        faasr_log(f"  gridMET Site {site} variable={var}")
-        resp = requests.get(base_url, params=params, timeout=60)
-        if not resp.ok:
-            msg = f"gridMET API error for Site {site} var={var}: {resp.status_code} {resp.text[:200]}"
-            faasr_log(msg)
-            raise RuntimeError(msg)
-        data = resp.json()
-        # Expected structure: {"data": [[date, value], ...]} or {"dates": [...], "values": [...]}
-        if "data" in data:
-            rows = data["data"]
-            tmp = pd.DataFrame(rows, columns=["Date", var])
-        elif "dates" in data and "values" in data:
-            tmp = pd.DataFrame({"Date": data["dates"], var: data["values"]})
-        else:
-            msg = f"Unexpected gridMET response structure for var={var}: {list(data.keys())}"
-            faasr_log(msg)
-            raise RuntimeError(msg)
-        tmp["Date"] = pd.to_datetime(tmp["Date"]).dt.normalize()
-        tmp[var] = pd.to_numeric(tmp[var], errors="coerce")
-        frames.append(tmp.set_index("Date"))
+    faasr_log(f"AgriMet: {len(df)} rows fetched")
+    return df[required]
 
-    df = pd.concat(frames, axis=1).reset_index()
 
-    out = pd.DataFrame()
-    out["Date"] = df["Date"]
-    out["Site"] = site
-    out["latitude"] = lat
-    out["longitude"] = lon
+def _fetch_gridmet():
+    site_dfs = []
 
-    # Precipitation: mm (already SI)
-    out["precip_mm"] = df.get("precipitation_amount", np.nan)
+    for site in SITES:
+        site_id = site["Site"]
+        site_lat = site["latitude"]
+        site_lon = site["longitude"]
+        faasr_log(f"Fetching gridMET data for site {site_id} (lat={site_lat}, lon={site_lon})")
 
-    # Temperatures: K → C
-    tmin = df.get("daily_minimum_temperature", pd.Series(np.nan, index=df.index))
-    tmax = df.get("daily_maximum_temperature", pd.Series(np.nan, index=df.index))
-    tmin_c = pd.to_numeric(tmin, errors="coerce")
-    tmax_c = pd.to_numeric(tmax, errors="coerce")
-    # If values look like Kelvin (> 200), subtract 273.15
-    if tmin_c.median() > 200:
-        tmin_c = tmin_c - 273.15
-    if tmax_c.median() > 200:
-        tmax_c = tmax_c - 273.15
-    out["tmin_c"] = tmin_c
-    out["tmax_c"] = tmax_c
-    out["tmean_c"] = (tmin_c + tmax_c) / 2.0
+        var_data = {}
+        date_index = None
 
-    # ETo grass (mm)
-    out["eto_grass_mm"] = df.get("potential_evapotranspiration", np.nan)
+        for var, col in GRIDMET_VAR_MAP.items():
+            url = GRIDMET_BASE.format(var=var)
 
-    # Solar: W/m2 → MJ/m2/day
-    solar = df.get("surface_downwelling_shortwave_flux_in_air", pd.Series(np.nan, index=df.index))
-    solar_num = pd.to_numeric(solar, errors="coerce")
-    out["solar_rad_mj_m2"] = solar_num * 0.0864
+            def _do_fetch(_var=var, _url=url, _lat=site_lat, _lon=site_lon):
+                faasr_log(f"  Opening gridMET variable {_var}")
+                ds = xr.open_dataset(_url, engine="netcdf4")
 
-    # Wind: m/s (already SI)
-    out["wind_speed_m_s"] = df.get("wind_speed", np.nan)
+                lon_name = "lon" if "lon" in ds.coords else "longitude"
+                lat_name = "lat" if "lat" in ds.coords else "latitude"
 
-    return out.sort_values("Date").reset_index(drop=True)
+                lon_min = float(ds.coords[lon_name].values.min())
+                sel_lon = _lon % 360 if lon_min >= 0 else _lon
+
+                ds_pt = ds.sel({lat_name: _lat, lon_name: sel_lon}, method="nearest")
+
+                t_name = None
+                for tc in ["day", "time", "Date"]:
+                    if tc in ds_pt.coords:
+                        t_name = tc
+                        break
+                if t_name is None:
+                    ds.close()
+                    raise RuntimeError(f"No time coordinate found in gridMET {_var}")
+
+                try:
+                    ds_pt = ds_pt.sel({t_name: slice(DATE_START, DATE_END)})
+                except Exception:
+                    all_dates = _to_date_strings(ds_pt[t_name].values)
+                    idx = [
+                        i for i, d in enumerate(all_dates)
+                        if DATE_START <= d <= DATE_END
+                    ]
+                    ds_pt = ds_pt.isel({t_name: idx})
+
+                times_raw = ds_pt[t_name].values
+                dates = _to_date_strings(times_raw)
+                vals = ds_pt[_var].values.astype(float)
+                ds.close()
+                return dates, vals
+
+            dates, vals = _retry(_do_fetch, 3, f"gridMET {var} site {site_id}")
+
+            if date_index is None:
+                date_index = dates
+            var_data[col] = vals
+
+        if not date_index:
+            raise RuntimeError(
+                f"gridMET returned no dates for site {site_id} — no usable gridMET dates"
+            )
+
+        df_site = pd.DataFrame({"Date": date_index})
+        df_site["Site"] = site_id
+        df_site["latitude"] = site_lat
+        df_site["longitude"] = site_lon
+        for col, vals in var_data.items():
+            df_site[col] = vals
+
+        site_dfs.append(df_site)
+
+    df = pd.concat(site_dfs, ignore_index=True)
+
+    # Unit conversions
+    df["tmin_c"] = df["tmin_c"] - 273.15       # K → °C
+    df["tmax_c"] = df["tmax_c"] - 273.15       # K → °C
+    df["tmean_c"] = (df["tmin_c"] + df["tmax_c"]) / 2.0
+    df["solar_rad_mj_m2"] = df["solar_rad_mj_m2"] * 0.0864  # W/m² → MJ/m²/day
+    # pr, pet, etr already in mm; vs already in m/s
+
+    required = [
+        "Date", "Site", "latitude", "longitude",
+        "precip_mm", "tmin_c", "tmax_c", "tmean_c",
+        "eto_grass_mm", "eto_alfalfa_mm", "solar_rad_mj_m2", "wind_speed_m_s",
+    ]
+    for c in required:
+        if c not in df.columns:
+            df[c] = np.nan
+
+    faasr_log(f"gridMET: {len(df)} rows fetched across {df['Site'].nunique()} sites")
+    return df[required]
 
 
 def download_weather_data(folder: str, input1: str, output1: str, output2: str, output3: str) -> None:
-    # ── 1. Download the VWC CSV ──────────────────────────────────────────────
-    local_vwc = os.path.join(tempfile.gettempdir(), input1)
-    faasr_log(f"Downloading {input1} from folder {folder}")
+    local_vwc = "vwc_validated_dwd.csv"
+    local_agrimet = "agrimet_local.csv"
+    local_gridmet = "gridmet_local.csv"
+    local_merged = "weather_merged_local.csv"
+
+    # Load validated VWC data
+    faasr_log(f"Loading {input1} from folder {folder}")
     faasr_get_file(local_file=local_vwc, remote_folder=folder, remote_file=input1)
-    vwc_df = pd.read_csv(local_vwc)
-    vwc_df["Date"] = pd.to_datetime(vwc_df["Date"]).dt.normalize()
-    faasr_log(f"VWC CSV loaded: {len(vwc_df)} rows")
+    df_vwc = pd.read_csv(local_vwc)
+    faasr_log(f"VWC data: {len(df_vwc)} rows")
+    n_vwc = len(df_vwc)
 
-    # ── 2. Fetch AgriMet ─────────────────────────────────────────────────────
-    agrimet_df = _fetch_agrimet()
-    local_agrimet = os.path.join(tempfile.gettempdir(), output1)
-    agrimet_df.to_csv(local_agrimet, index=False)
+    # Fetch AgriMet
+    faasr_log("Starting AgriMet fetch")
+    df_agrimet = _fetch_agrimet()
+
+    # Fetch gridMET
+    faasr_log("Starting gridMET fetch")
+    df_gridmet = _fetch_gridmet()
+
+    # Validate agrimet
+    agrimet_required = [
+        "Date", "station", "precip_mm", "tmin_c", "tmax_c", "tmean_c",
+        "eto_grass_mm", "eto_alfalfa_mm", "solar_rad_mj_m2", "wind_speed_m_s",
+    ]
+    missing_ag = [c for c in agrimet_required if c not in df_agrimet.columns]
+    if missing_ag:
+        raise ValueError(f"agrimet.csv missing required columns: {missing_ag}")
+    if df_agrimet.empty:
+        raise ValueError("agrimet.csv is empty — no data returned from AgriMet")
+    ag_dates = df_agrimet["Date"].tolist()
+    if not any(DATE_START <= d <= DATE_END for d in ag_dates):
+        raise ValueError(
+            f"agrimet.csv contains no dates in {DATE_START} – {DATE_END}"
+        )
+
+    # Validate gridmet
+    gridmet_required = [
+        "Date", "Site", "latitude", "longitude",
+        "precip_mm", "tmin_c", "tmax_c", "tmean_c",
+        "eto_grass_mm", "eto_alfalfa_mm", "solar_rad_mj_m2", "wind_speed_m_s",
+    ]
+    missing_gm = [c for c in gridmet_required if c not in df_gridmet.columns]
+    if missing_gm:
+        raise ValueError(f"gridmet.csv missing required columns: {missing_gm}")
+    if df_gridmet.empty:
+        raise ValueError("gridmet.csv is empty — no data returned from gridMET")
+    gm_sites = set(df_gridmet["Site"].unique())
+    missing_sites = {1, 2, 3, 4} - gm_sites
+    if missing_sites:
+        raise ValueError(f"gridmet.csv missing data for sites: {missing_sites}")
+
+    # Save agrimet and gridmet to local files
+    df_agrimet.to_csv(local_agrimet, index=False)
+    df_gridmet.to_csv(local_gridmet, index=False)
+
+    # Build merged output: left-join VWC with agrimet (on Date), then gridmet (on Date+Site)
+    df_ag_merge = df_agrimet.rename(columns={c: f"{c}_agrimet" for c in WEATHER_COLS})
+    df_gm_merge = df_gridmet.rename(columns={c: f"{c}_gridmet" for c in WEATHER_COLS})
+
+    df_merged = df_vwc.merge(df_ag_merge, on="Date", how="left")
+    df_merged = df_merged.merge(df_gm_merge, on=["Date", "Site"], how="left")
+
+    df_merged = df_merged.sort_values(
+        ["Site", "Depth (in)", "Date"]
+    ).reset_index(drop=True)
+
+    # Validate merged row count
+    if len(df_merged) != n_vwc:
+        raise ValueError(
+            f"weather_merged.csv has {len(df_merged)} rows but VWC source had {n_vwc} rows"
+        )
+
+    df_merged.to_csv(local_merged, index=False)
+
+    # Upload all three outputs
+    faasr_log(f"Uploading {output1} ({len(df_agrimet)} rows)")
     faasr_put_file(local_file=local_agrimet, remote_folder=folder, remote_file=output1)
-    faasr_log(f"Uploaded {output1} ({len(agrimet_df)} rows) to folder {folder}")
 
-    # ── 3. Fetch gridMET for all four sites ──────────────────────────────────
-    faasr_log("Fetching gridMET data for all four sites")
-    gridmet_parts = []
-    for site_id, (lat, lon) in SITE_COORDS.items():
-        faasr_log(f"Fetching gridMET for Site {site_id} (lat={lat}, lon={lon})")
-        part = _fetch_gridmet_site(site_id, lat, lon)
-        gridmet_parts.append(part)
-    gridmet_df = pd.concat(gridmet_parts, ignore_index=True)
-    local_gridmet = os.path.join(tempfile.gettempdir(), output2)
-    gridmet_df.to_csv(local_gridmet, index=False)
+    faasr_log(f"Uploading {output2} ({len(df_gridmet)} rows)")
     faasr_put_file(local_file=local_gridmet, remote_folder=folder, remote_file=output2)
-    faasr_log(f"Uploaded {output2} ({len(gridmet_df)} rows) to folder {folder}")
 
-    # ── 4. Merge VWC + AgriMet + gridMET ────────────────────────────────────
-    merged = vwc_df.copy()
-    agrimet_merge = agrimet_df.drop(columns=["station"], errors="ignore")
-    merged = merged.merge(
-        agrimet_merge.add_suffix("_agrimet").rename(columns={"Date_agrimet": "Date"}),
-        on="Date",
-        how="left",
-    )
-
-    gridmet_merge = gridmet_df.drop(columns=["latitude", "longitude"], errors="ignore")
-    # gridMET has (Date, Site); VWC has Site as integer
-    gridmet_merge["Site"] = gridmet_merge["Site"].astype(vwc_df["Site"].dtype)
-    merged = merged.merge(
-        gridmet_merge.add_suffix("_gridmet").rename(
-            columns={"Date_gridmet": "Date", "Site_gridmet": "Site"}
-        ),
-        on=["Date", "Site"],
-        how="left",
-    )
-
-    local_merged = os.path.join(tempfile.gettempdir(), output3)
-    merged.to_csv(local_merged, index=False)
+    faasr_log(f"Uploading {output3} ({len(df_merged)} rows)")
     faasr_put_file(local_file=local_merged, remote_folder=folder, remote_file=output3)
-    faasr_log(f"Uploaded {output3} ({len(merged)} rows) to folder {folder}")
+
+    faasr_log("download_weather_data complete")
+
+    for f in [local_vwc, local_agrimet, local_gridmet, local_merged]:
+        if os.path.exists(f):
+            os.remove(f)
