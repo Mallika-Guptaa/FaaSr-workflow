@@ -11,12 +11,13 @@
       "Type": "Python",
       "FunctionName": "load_vwc_data",
       "Arguments": {
-        "folder": "Data",
+        "folder": "workflow_data",
         "input1": "sites_vwc_corrected.csv",
-        "output1": "sites_vwc_corrected.csv"
+        "output1": "vwc_validated.csv"
       },
       "InvokeNext": [
-        "download-weather-data"
+        "download-weather-data",
+        "create-site-locations-json"
       ]
     },
     "download-weather-data": {
@@ -24,8 +25,8 @@
       "Type": "Python",
       "FunctionName": "download_weather_data",
       "Arguments": {
-        "folder": "Data",
-        "input1": "sites_vwc_corrected.csv",
+        "folder": "workflow_data",
+        "input1": "vwc_validated.csv",
         "output1": "agrimet.csv",
         "output2": "gridmet.csv",
         "output3": "weather_merged.csv"
@@ -39,8 +40,8 @@
       "Type": "Python",
       "FunctionName": "generate_site_plots",
       "Arguments": {
-        "folder": "Data",
-        "input1": "sites_vwc_corrected.csv",
+        "folder": "workflow_data",
+        "input1": "vwc_validated.csv",
         "output1": "site_1_vwc_plot.png",
         "output2": "site_2_vwc_plot.png",
         "output3": "site_3_vwc_plot.png",
@@ -55,27 +56,25 @@
       "Type": "Python",
       "FunctionName": "upload_plots",
       "Arguments": {
-        "folder": "Data",
+        "folder": "workflow_data",
         "input1": "site_1_vwc_plot.png",
         "input2": "site_2_vwc_plot.png",
         "input3": "site_3_vwc_plot.png",
         "input4": "site_4_vwc_plot.png",
-        "output1": "site_1_vwc_plot.png",
-        "output2": "site_2_vwc_plot.png",
-        "output3": "site_3_vwc_plot.png",
-        "output4": "site_4_vwc_plot.png"
+        "output1": "site_1_vwc_plot_uploaded.png",
+        "output2": "site_2_vwc_plot_uploaded.png",
+        "output3": "site_3_vwc_plot_uploaded.png",
+        "output4": "site_4_vwc_plot_uploaded.png"
       },
-      "InvokeNext": [
-        "create-site-locations-json"
-      ]
+      "InvokeNext": []
     },
     "create-site-locations-json": {
       "FaaSServer": "GH",
       "Type": "Python",
       "FunctionName": "create_site_locations_json",
       "Arguments": {
-        "folder": "Data",
-        "input1": "site_4_vwc_plot.png",
+        "folder": "workflow_data",
+        "input1": "vwc_validated.csv",
         "output1": "site_locations.json"
       },
       "InvokeNext": []
@@ -128,9 +127,9 @@
     "generate_site_plots": [
       "pandas",
       "matplotlib"
+    ],
+    "create_site_locations_json": [
+      "pandas"
     ]
-  },
-  "Secrets": [
-    "AGRIMET_API_TOKEN"
-  ]
+  }
 }
