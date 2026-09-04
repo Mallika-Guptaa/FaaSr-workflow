@@ -3,7 +3,12 @@
     "BuildMonthlyAverages": {
       "Arguments": {
         "input_prefix": "zentra_final_12_configs",
-        "output_prefix": "Zentra_monthly_averages"
+        "output_prefix": "Zentra_monthly_averages",
+        "timezone_name": "America/Los_Angeles",
+        "average_method": "daily_mean",
+        "exclude_error_rows": true,
+        "conflict_policy": "fail",
+        "minimum_day_coverage_ratio": 0.8
       },
       "InvokeNext": [
         "FinishMonthlyAverages"
@@ -57,5 +62,5 @@
   "Secrets": [],
   "FaaSrLog": "FaaSrLog",
   "LoggingDataStore": "S3PRIVATE",
-  "WorkflowName": "ZentraMonthlyAverages"
+  "WorkflowName": "ZentraMonthlyAveragesSafeFullBuild"
 }
