@@ -15,11 +15,47 @@
         "ports": "AUTO"
       },
       "InvokeNext": [
-        "DetectDailyZentraAnomaliesAndEmail"
+        "Update12ConfigsFromDailySummary"
       ],
       "FaaSServer": "GH",
       "Type": "Python",
       "FunctionName": "fetch_daily_zentra_raw"
+    },
+    "Update12ConfigsFromDailySummary": {
+      "Arguments": {
+        "raw_prefix": "zentra_raw_backfill",
+        "daily_state_prefix": "zentra_daily_update_state",
+        "daily_summary_file": "daily_update_summary_latest.json",
+        "output_prefix": "zentra_final_12_configs",
+        "manifest_prefix": "zentra_processing_state",
+        "manifest_file": "processed_raw_manifest.json",
+        "update_summary_file": "daily_12config_update_summary_latest.json",
+        "timezone_name": "America/Los_Angeles"
+      },
+      "InvokeNext": [
+        "UpdateMonthlyAverages",
+        "DetectDailyZentraAnomaliesAndEmail"
+      ],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "update_12_configs_from_daily_summary"
+    },
+    "UpdateMonthlyAverages": {
+      "Arguments": {
+        "input_prefix": "zentra_final_12_configs",
+        "output_prefix": "Zentra_monthly_averages",
+        "processing_state_prefix": "zentra_processing_state",
+        "daily_12_summary_file": "daily_12config_update_summary_latest.json",
+        "timezone_name": "America/Los_Angeles",
+        "average_method": "daily_mean",
+        "exclude_error_rows": true,
+        "conflict_policy": "keep_distinct",
+        "minimum_day_coverage_ratio": 0.8
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "update_monthly_averages_incremental"
     },
     "DetectDailyZentraAnomaliesAndEmail": {
       "Arguments": {
@@ -29,53 +65,12 @@
         "alert_prefix": "zentra_anomaly_alerts",
         "sent_ids_file": "sent_anomaly_ids.json",
         "max_rows_in_email": 20,
-        "dry_run": "false"
-      },
-      "InvokeNext": [
-        "ReadZentraRawFiles"
-      ],
-      "FaaSServer": "GH",
-      "Type": "Python",
-      "FunctionName": "detect_daily_zentra_anomalies_and_send_email"
-    },
-    "ReadZentraRawFiles": {
-      "Arguments": {
-        "raw_prefix": "zentra_raw_backfill",
-        "staging_prefix": "zentra_phase2_daily_staging",
-        "max_files_per_serial": "ALL",
-        "output_prefix": "zentra_final_12_configs",
-        "rebuild_mode": "incremental"
-      },
-      "InvokeNext": [
-        "Form12ConfigCSVs"
-      ],
-      "FaaSServer": "GH",
-      "Type": "Python",
-      "FunctionName": "read_zentra_raw_files"
-    },
-    "Form12ConfigCSVs": {
-      "Arguments": {
-        "staging_prefix": "zentra_phase2_daily_staging",
-        "generated_prefix": "zentra_phase2_daily_staging/generated_12_configs"
-      },
-      "InvokeNext": [
-        "Upload12ConfigCSVs"
-      ],
-      "FaaSServer": "GH",
-      "Type": "Python",
-      "FunctionName": "form_12_config_csvs"
-    },
-    "Upload12ConfigCSVs": {
-      "Arguments": {
-        "generated_prefix": "zentra_phase2_daily_staging/generated_12_configs",
-        "output_prefix": "zentra_final_12_configs",
-        "staging_prefix": "zentra_phase2_daily_staging",
-        "upload_mode": "merge"
+        "dry_run": false
       },
       "InvokeNext": [],
       "FaaSServer": "GH",
       "Type": "Python",
-      "FunctionName": "upload_12_config_csvs"
+      "FunctionName": "detect_daily_zentra_anomalies_and_send_email"
     }
   },
   "ComputeServers": {
@@ -96,37 +91,32 @@
   },
   "ActionContainers": {
     "FetchDailyZentraRaw": "ghcr.io/faasr/github-actions-python:latest",
-    "DetectDailyZentraAnomaliesAndEmail": "ghcr.io/faasr/github-actions-python:latest",
-    "ReadZentraRawFiles": "ghcr.io/faasr/github-actions-python:latest",
-    "Form12ConfigCSVs": "ghcr.io/faasr/github-actions-python:latest",
-    "Upload12ConfigCSVs": "ghcr.io/faasr/github-actions-python:latest"
+    "Update12ConfigsFromDailySummary": "ghcr.io/faasr/github-actions-python:latest",
+    "UpdateMonthlyAverages": "ghcr.io/faasr/github-actions-python:latest",
+    "DetectDailyZentraAnomaliesAndEmail": "ghcr.io/faasr/github-actions-python:latest"
   },
   "FunctionInvoke": "FetchDailyZentraRaw",
   "DefaultDataStore": "S3PRIVATE",
   "FunctionGitRepo": {
     "fetch_daily_zentra_raw": "Mallika-Guptaa/zentra_backfill_workflow_files/python",
-    "detect_daily_zentra_anomalies_and_send_email": "Mallika-Guptaa/zentra_backfill_workflow_files/python",
-    "read_zentra_raw_files": "Mallika-Guptaa/zentra_backfill_workflow_files/python",
-    "form_12_config_csvs": "Mallika-Guptaa/zentra_backfill_workflow_files/python",
-    "upload_12_config_csvs": "Mallika-Guptaa/zentra_backfill_workflow_files/python"
+    "update_12_configs_from_daily_summary": "Mallika-Guptaa/zentra_backfill_workflow_files/python",
+    "update_monthly_averages_incremental": "Mallika-Guptaa/zentra_backfill_workflow_files/python",
+    "detect_daily_zentra_anomalies_and_send_email": "Mallika-Guptaa/zentra_backfill_workflow_files/python"
   },
   "PyPIPackageDownloads": {
     "fetch_daily_zentra_raw": [
       "pandas",
       "requests"
     ],
+    "update_12_configs_from_daily_summary": [
+      "pandas"
+    ],
+    "update_monthly_averages_incremental": [
+      "pandas"
+    ],
     "detect_daily_zentra_anomalies_and_send_email": [
       "pandas",
       "requests"
-    ],
-    "read_zentra_raw_files": [
-      "pandas"
-    ],
-    "form_12_config_csvs": [
-      "pandas"
-    ],
-    "upload_12_config_csvs": [
-      "pandas"
     ]
   },
   "Secrets": [
@@ -137,5 +127,5 @@
   ],
   "FaaSrLog": "FaaSrLog",
   "LoggingDataStore": "S3PRIVATE",
-  "WorkflowName": "ZentraDailyUpdate"
+  "WorkflowName": "ZentraSmartTAPDailyPipeline"
 }
