@@ -58,15 +58,17 @@
       "FunctionName": "update_monthly_averages_incremental"
     },
     "DetectDailyZentraAnomaliesAndEmail": {
-      "Arguments": {
-        "raw_prefix": "zentra_raw_backfill",
-        "state_prefix": "zentra_daily_update_state",
-        "latest_summary_file": "daily_update_summary_latest.json",
-        "alert_prefix": "zentra_anomaly_alerts",
-        "sent_ids_file": "sent_anomaly_ids.json",
-        "max_rows_in_email": 20,
-        "dry_run": false
-      },
+        "Arguments": {
+          "raw_prefix": "zentra_raw_backfill",
+          "state_prefix": "zentra_daily_update_state",
+          "latest_summary_file": "daily_update_summary_latest.json",
+          "alert_prefix": "zentra_anomaly_alerts",
+          "sent_ids_file": "sent_anomaly_ids.json",
+          "max_rows_in_email": 20,
+          "dry_run": false,
+          "logger_silence_hours": 6,
+          "logger_silence_state_file": "logger_silence_state.json"
+        },
       "InvokeNext": [],
       "FaaSServer": "GH",
       "Type": "Python",
