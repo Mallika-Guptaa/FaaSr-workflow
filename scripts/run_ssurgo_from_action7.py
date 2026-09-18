@@ -32,6 +32,7 @@ LOCATIONS_KEY = os.getenv(
 OUTPUT_PREFIX = os.getenv("SSURGO_OUTPUT_PREFIX", "soil_sensor_processing/ssurgo").rstrip("/")
 
 SDA_URL = "https://sdmdataaccess.sc.egov.usda.gov/Tabular/post.rest"
+LOCAL_ARTIFACT_DIR = os.getenv("LOCAL_ARTIFACT_DIR", "artifacts/ssurgo")
 
 
 def s3_client():
@@ -348,6 +349,15 @@ def main() -> None:
     props_csv = props.to_csv(index=False).encode("utf-8")
     horizons_csv = horizons_all.to_csv(index=False).encode("utf-8")
     manifest_json = json.dumps(manifest, indent=2).encode("utf-8")
+
+    # Keep local copies so the GitHub workflow can upload a reviewable artifact.
+    os.makedirs(LOCAL_ARTIFACT_DIR, exist_ok=True)
+    with open(os.path.join(LOCAL_ARTIFACT_DIR, "ssurgo_site_depth_hydraulic_properties.csv"), "wb") as handle:
+        handle.write(props_csv)
+    with open(os.path.join(LOCAL_ARTIFACT_DIR, "ssurgo_dominant_component_horizons.csv"), "wb") as handle:
+        handle.write(horizons_csv)
+    with open(os.path.join(LOCAL_ARTIFACT_DIR, "ssurgo_extraction_manifest.json"), "wb") as handle:
+        handle.write(manifest_json)
 
     write_s3_bytes(
         f"{OUTPUT_PREFIX}/ssurgo_site_depth_hydraulic_properties.csv",
