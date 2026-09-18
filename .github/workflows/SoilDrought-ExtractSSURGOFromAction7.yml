@@ -1,0 +1,47 @@
+name: SoilDrought-ExtractSSURGOFromAction7
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/SoilDrought-ExtractSSURGOFromAction7.yml"
+      - "scripts/run_ssurgo_from_action7.py"
+
+jobs:
+  extract-ssurgo:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install boto3 pandas numpy requests
+
+      - name: Extract SSURGO hydraulic properties from Action 7 output
+        env:
+          S3PRIVATE_AccessKey: ${{ secrets.S3PRIVATE_AccessKey }}
+          S3PRIVATE_SecretKey: ${{ secrets.S3PRIVATE_SecretKey }}
+          SOIL_BUCKET: faasr-bucket-smarttap-private
+          SOIL_BUCKET_REGION: us-east-1
+          ACTION7_KEY: soil_sensor_processing/bias_correction/soil_moisture_bias_corrected.csv
+          LOCATIONS_KEY: soil_sensor_processing/staging/site_locations.json
+          SSURGO_OUTPUT_PREFIX: soil_sensor_processing/ssurgo
+          LOCAL_ARTIFACT_DIR: artifacts/ssurgo
+        run: |
+          python scripts/run_ssurgo_from_action7.py
+
+      - name: Upload SSURGO outputs for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ssurgo-site-hydraulic-properties
+          path: artifacts/ssurgo/
+          if-no-files-found: warn
