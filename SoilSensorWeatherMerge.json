@@ -168,36 +168,6 @@
       "Type": "Python",
       "FunctionName": "detect_and_correct_bias"
     },
-    "SmoothAndValidateFinalDataset": {
-      "Arguments": {
-        "staging_prefix": "soil_sensor_processing/staging",
-        "bias_prefix": "soil_sensor_processing/bias_correction",
-        "outlier_prefix": "soil_sensor_processing/outlier_detection",
-        "final_prefix": "soil_sensor_processing/final",
-        "original_sensor_file": "sensor_observations_standardized.csv",
-        "bias_corrected_file": "soil_moisture_bias_corrected.csv",
-        "outlier_flagged_file": "soil_moisture_outlier_flagged.csv",
-        "final_file": "final_soil_moisture_csv.csv",
-        "validation_metrics_file": "temporal_smoothing_validation_metrics.csv",
-        "physical_checks_file": "physical_consistency_checks.csv",
-        "final_manifest_file": "final_processing_manifest.json",
-        "moving_average_window": 3,
-        "savgol_window": 5,
-        "savgol_polynomial_order": 2,
-        "low_pass_cutoff": 0.35,
-        "low_pass_order": 2,
-        "maximum_smoothing_adjustment": 0.03,
-        "rain_event_threshold": 1,
-        "dry_threshold": 0.5,
-        "physical_response_tolerance": 0.02,
-        "comparison_plot_file": "08_temporal_smoothing_comparison.png",
-        "site_artifacts_prefix": "soil_sensor_processing/sites"
-      },
-      "InvokeNext": [],
-      "FaaSServer": "GH",
-      "Type": "Python",
-      "FunctionName": "smooth_and_validate_final_dataset"
-    },
     "ExtractSSURGOSoilProperties": {
       "Arguments": {
         "staging_prefix": "soil_sensor_processing/staging",
@@ -240,7 +210,6 @@
     "DetectClassifyReconstructGaps": "ghcr.io/faasr/github-actions-python:latest",
     "DetectOutliers": "ghcr.io/faasr/github-actions-python:latest",
     "DetectAndCorrectBias": "ghcr.io/faasr/github-actions-python:latest",
-    "SmoothAndValidateFinalDataset": "ghcr.io/faasr/github-actions-python:latest",
     "ExtractSSURGOSoilProperties": "ghcr.io/faasr/github-actions-python:latest"
   },
   "FunctionInvoke": "LoadSoilInputs",
@@ -253,7 +222,6 @@
     "reconstruct_missing_gaps": "Mallika-Guptaa/soil-senors/python",
     "detect_outliers": "Mallika-Guptaa/soil-senors/python",
     "detect_and_correct_bias": "Mallika-Guptaa/soil-senors/python",
-    "smooth_and_validate_final_dataset": "Mallika-Guptaa/soil-senors/python",
     "extract_ssurgo_soil_properties": "Mallika-Guptaa/soil-senors/python"
   },
   "PyPIPackageDownloads": {
@@ -295,12 +263,6 @@
     "detect_and_correct_bias": [
       "pandas",
       "requests",
-      "matplotlib"
-    ],
-    "smooth_and_validate_final_dataset": [
-      "pandas",
-      "requests",
-      "scipy",
       "matplotlib"
     ],
     "extract_ssurgo_soil_properties": [
