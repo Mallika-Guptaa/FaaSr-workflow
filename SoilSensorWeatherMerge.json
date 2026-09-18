@@ -180,10 +180,27 @@
         "manifest_file": "ssurgo_extraction_manifest.json",
         "request_timeout_seconds": 90
       },
-      "InvokeNext": [],
+      "InvokeNext": [
+        "CalculateDroughtIndicators"
+      ],
       "FaaSServer": "GH",
       "Type": "Python",
       "FunctionName": "extract_ssurgo_soil_properties"
+    },
+    "CalculateDroughtIndicators": {
+      "Arguments": {
+        "bias_prefix": "soil_sensor_processing/bias_correction",
+        "ssurgo_prefix": "soil_sensor_processing/ssurgo",
+        "drought_prefix": "soil_sensor_processing/drought_alerts",
+        "bias_corrected_file": "soil_moisture_bias_corrected.csv",
+        "properties_file": "ssurgo_site_depth_hydraulic_properties.csv",
+        "layer_output_file": "soil_moisture_layer_drought_indicators.csv",
+        "manifest_file": "drought_indicator_manifest.json"
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "calculate_drought_indicators"
     }
   },
   "ComputeServers": {
@@ -210,7 +227,8 @@
     "DetectClassifyReconstructGaps": "ghcr.io/faasr/github-actions-python:latest",
     "DetectOutliers": "ghcr.io/faasr/github-actions-python:latest",
     "DetectAndCorrectBias": "ghcr.io/faasr/github-actions-python:latest",
-    "ExtractSSURGOSoilProperties": "ghcr.io/faasr/github-actions-python:latest"
+    "ExtractSSURGOSoilProperties": "ghcr.io/faasr/github-actions-python:latest",
+    "CalculateDroughtIndicators": "ghcr.io/faasr/github-actions-python:latest"
   },
   "FunctionInvoke": "LoadSoilInputs",
   "DefaultDataStore": "S3PRIVATE",
@@ -222,7 +240,8 @@
     "reconstruct_missing_gaps": "Mallika-Guptaa/soil-senors/python",
     "detect_outliers": "Mallika-Guptaa/soil-senors/python",
     "detect_and_correct_bias": "Mallika-Guptaa/soil-senors/python",
-    "extract_ssurgo_soil_properties": "Mallika-Guptaa/soil-senors/python"
+    "extract_ssurgo_soil_properties": "Mallika-Guptaa/soil-senors/python",
+    "calculate_drought_indicators": "Mallika-Guptaa/soil-senors/python"
   },
   "PyPIPackageDownloads": {
     "load_soil_inputs": [
@@ -266,6 +285,11 @@
       "matplotlib"
     ],
     "extract_ssurgo_soil_properties": [
+      "pandas",
+      "numpy",
+      "requests"
+    ],
+    "calculate_drought_indicators": [
       "pandas",
       "numpy",
       "requests"
