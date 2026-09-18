@@ -1,6 +1,6 @@
 name: SoilSensorWeatherMerge-RegisterAndInvoke
 
-# Rerun reason: remove smoothing and route Action 7 output into SSURGO extraction.
+# Rerun reason: register Action 7 -> SSURGO -> drought indicators with smoothing removed.
 on:
   push:
     paths:
