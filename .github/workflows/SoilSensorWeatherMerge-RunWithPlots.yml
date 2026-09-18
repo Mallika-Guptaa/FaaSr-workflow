@@ -1,6 +1,6 @@
 name: SoilSensorWeatherMerge-RegisterAndInvoke
 
-# Rerun reason: create per-site plot folders and final JSON summaries.
+# Rerun reason: remove smoothing and route Action 7 output into SSURGO extraction.
 on:
   push:
     paths:
