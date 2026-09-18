@@ -1,6 +1,6 @@
 name: SoilSensorWeatherMerge-RegisterAndInvoke
 
-# Rerun reason: register Action 7 -> SSURGO -> drought indicators with smoothing removed.
+# Rerun reason: validate full SSURGO -> root-zone drought -> field alert pipeline with temporary test values.
 on:
   push:
     paths:
