@@ -195,12 +195,30 @@
         "bias_corrected_file": "soil_moisture_bias_corrected.csv",
         "properties_file": "ssurgo_site_depth_hydraulic_properties.csv",
         "layer_output_file": "soil_moisture_layer_drought_indicators.csv",
-        "manifest_file": "drought_indicator_manifest.json"
+        "manifest_file": "drought_indicator_manifest.json",
+        "root_zone_output_file": "soil_moisture_root_zone_drought_indicators.csv",
+        "root_zone_depth_in": 30,
+        "readily_available_depletion_fraction": 0.5,
+        "parameter_status": "temporary_test_values"
+      },
+      "InvokeNext": [
+        "GenerateFieldDroughtAlerts"
+      ],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "calculate_drought_indicators"
+    },
+    "GenerateFieldDroughtAlerts": {
+      "Arguments": {
+        "drought_prefix": "soil_sensor_processing/drought_alerts",
+        "root_zone_output_file": "soil_moisture_root_zone_drought_indicators.csv",
+        "field_summary_file": "field_drought_alert_summary.csv",
+        "field_alerts_json": "field_drought_alerts_latest.json"
       },
       "InvokeNext": [],
       "FaaSServer": "GH",
       "Type": "Python",
-      "FunctionName": "calculate_drought_indicators"
+      "FunctionName": "generate_field_drought_alerts"
     }
   },
   "ComputeServers": {
@@ -228,7 +246,8 @@
     "DetectOutliers": "ghcr.io/faasr/github-actions-python:latest",
     "DetectAndCorrectBias": "ghcr.io/faasr/github-actions-python:latest",
     "ExtractSSURGOSoilProperties": "ghcr.io/faasr/github-actions-python:latest",
-    "CalculateDroughtIndicators": "ghcr.io/faasr/github-actions-python:latest"
+    "CalculateDroughtIndicators": "ghcr.io/faasr/github-actions-python:latest",
+    "GenerateFieldDroughtAlerts": "ghcr.io/faasr/github-actions-python:latest"
   },
   "FunctionInvoke": "LoadSoilInputs",
   "DefaultDataStore": "S3PRIVATE",
@@ -241,7 +260,8 @@
     "detect_outliers": "Mallika-Guptaa/soil-senors/python",
     "detect_and_correct_bias": "Mallika-Guptaa/soil-senors/python",
     "extract_ssurgo_soil_properties": "Mallika-Guptaa/soil-senors/python",
-    "calculate_drought_indicators": "Mallika-Guptaa/soil-senors/python"
+    "calculate_drought_indicators": "Mallika-Guptaa/soil-senors/python",
+    "generate_field_drought_alerts": "Mallika-Guptaa/soil-senors/python"
   },
   "PyPIPackageDownloads": {
     "load_soil_inputs": [
@@ -290,6 +310,11 @@
       "requests"
     ],
     "calculate_drought_indicators": [
+      "pandas",
+      "numpy",
+      "requests"
+    ],
+    "generate_field_drought_alerts": [
       "pandas",
       "numpy",
       "requests"
