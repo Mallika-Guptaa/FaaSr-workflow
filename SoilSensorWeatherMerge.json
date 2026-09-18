@@ -162,7 +162,7 @@
         "site_artifacts_prefix": "soil_sensor_processing/sites"
       },
       "InvokeNext": [
-        "SmoothAndValidateFinalDataset"
+        "ExtractSSURGOSoilProperties"
       ],
       "FaaSServer": "GH",
       "Type": "Python",
@@ -197,6 +197,23 @@
       "FaaSServer": "GH",
       "Type": "Python",
       "FunctionName": "smooth_and_validate_final_dataset"
+    },
+    "ExtractSSURGOSoilProperties": {
+      "Arguments": {
+        "staging_prefix": "soil_sensor_processing/staging",
+        "bias_prefix": "soil_sensor_processing/bias_correction",
+        "ssurgo_prefix": "soil_sensor_processing/ssurgo",
+        "locations_file": "site_locations.json",
+        "bias_corrected_file": "soil_moisture_bias_corrected.csv",
+        "properties_file": "ssurgo_site_depth_hydraulic_properties.csv",
+        "horizons_file": "ssurgo_dominant_component_horizons.csv",
+        "manifest_file": "ssurgo_extraction_manifest.json",
+        "request_timeout_seconds": 90
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "extract_ssurgo_soil_properties"
     }
   },
   "ComputeServers": {
@@ -223,7 +240,8 @@
     "DetectClassifyReconstructGaps": "ghcr.io/faasr/github-actions-python:latest",
     "DetectOutliers": "ghcr.io/faasr/github-actions-python:latest",
     "DetectAndCorrectBias": "ghcr.io/faasr/github-actions-python:latest",
-    "SmoothAndValidateFinalDataset": "ghcr.io/faasr/github-actions-python:latest"
+    "SmoothAndValidateFinalDataset": "ghcr.io/faasr/github-actions-python:latest",
+    "ExtractSSURGOSoilProperties": "ghcr.io/faasr/github-actions-python:latest"
   },
   "FunctionInvoke": "LoadSoilInputs",
   "DefaultDataStore": "S3PRIVATE",
@@ -235,7 +253,8 @@
     "reconstruct_missing_gaps": "Mallika-Guptaa/soil-senors/python",
     "detect_outliers": "Mallika-Guptaa/soil-senors/python",
     "detect_and_correct_bias": "Mallika-Guptaa/soil-senors/python",
-    "smooth_and_validate_final_dataset": "Mallika-Guptaa/soil-senors/python"
+    "smooth_and_validate_final_dataset": "Mallika-Guptaa/soil-senors/python",
+    "extract_ssurgo_soil_properties": "Mallika-Guptaa/soil-senors/python"
   },
   "PyPIPackageDownloads": {
     "load_soil_inputs": [
@@ -283,6 +302,11 @@
       "requests",
       "scipy",
       "matplotlib"
+    ],
+    "extract_ssurgo_soil_properties": [
+      "pandas",
+      "numpy",
+      "requests"
     ]
   },
   "Secrets": [
